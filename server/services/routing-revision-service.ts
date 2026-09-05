@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { and, desc, eq, inArray, isNull, max } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, isNull, max } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   apiProducts,
@@ -92,6 +92,20 @@ export const routingRevisionService = {
     return db.select().from(routingRevisions).orderBy(desc(routingRevisions.createdAt))
   },
 
+  async listPage(options: { limit: number, offset: number }) {
+    const [items, totalRow] = await Promise.all([
+      db.select().from(routingRevisions)
+        .orderBy(desc(routingRevisions.createdAt))
+        .limit(options.limit)
+        .offset(options.offset),
+      db.select({ value: count() }).from(routingRevisions)
+    ])
+    return {
+      items,
+      total: Number(firstRow(totalRow)?.value ?? 0)
+    }
+  },
+
   async publish(
     createdBy: number | null,
     transaction?: { tx: DatabaseTransaction }
@@ -182,10 +196,18 @@ export const routingRevisionService = {
             const activeUpstream = activeUpstreams.get(id)
             if (activeUpstream) {
               // Keep the last active runtime while a managed Upstream waits
-              // for a verified Target. Once discovery succeeds, the next
-              // publication switches to the new Service-authenticated entry.
+              // for a verified Target. Only retain Targets that still exist
+              // and remain enabled; an intentional disable/delete must take
+              // effect even while another Target is waiting for verification.
               serviceManaged = activeUpstream.serviceManaged
-              targets = activeUpstream.targets.map(target => ({ ...target }))
+              const enabledTargetIds = new Set(
+                targetRows
+                  .filter(target => target.upstreamServiceId === id)
+                  .map(target => target.id)
+              )
+              targets = activeUpstream.targets
+                .filter(target => enabledTargetIds.has(target.id))
+                .map(target => ({ ...target }))
             }
           }
           if (targets.length === 0) {

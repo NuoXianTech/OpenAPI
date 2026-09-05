@@ -22,6 +22,7 @@ import type {
   RouteMutationInput,
   TargetRuntimeDrift
 } from '~~/server/types/platform-publication'
+import type { PlatformEndpointPublicationPatch } from '#shared/types/platform'
 import { findTargetRuntimeDrift } from '~~/server/utils/target-runtime-drift'
 import { ensureEndpointVersion } from '~~/server/services/platform-endpoint-product-service'
 import { synchronizeEndpointSupportRoutes } from '~~/server/services/platform-endpoint-support-route-service'
@@ -30,23 +31,6 @@ import { platformUpstreamService } from '~~/server/services/platform-upstream-se
 import { platformRuntimeService } from '~~/server/services/platform-runtime-service'
 import { firstRow } from '~~/server/utils/row'
 import type { ServiceEndpointSummary } from '#shared/types/service-control'
-
-interface EndpointPublicationPatch {
-  enabled?: boolean
-  name?: string
-  isApiKey?: boolean
-  isStatistics?: boolean
-  creditsCost?: number
-  rateLimitPerSecond?: number
-  rateLimitPerMinute?: number
-  rateLimitPerHour?: number
-  rateLimitPerDay?: number
-  timeoutMs?: number
-  maxRequestBytes?: number
-  maxResponseBytes?: number
-  catalogStatus?: 'automatic' | 'maintenance'
-  sensitiveQueryParameters?: string[]
-}
 
 interface CatalogItem {
   key: string
@@ -343,7 +327,7 @@ export const platformEndpointCatalogService = {
 
   async update(
     routeId: string,
-    input: EndpointPublicationPatch,
+    input: PlatformEndpointPublicationPatch,
     createdBy: number | null,
     options: { publishRouting?: boolean } = {}
   ) {

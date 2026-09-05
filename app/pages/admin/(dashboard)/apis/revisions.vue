@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent, TableColumn } from '@nuxt/ui'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformRoutingRevision, PlatformRuntime } from '#shared/types/platform'
+import type { PlatformRoutingRevisionSummary, PlatformRuntime } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors } from '~/utils/form-validation'
 import { formatPlatformDate } from '~/utils/platform-display'
@@ -22,13 +24,16 @@ const runtimeResource = usePrivateResource<PlatformRuntime>({
     updatedAt: ''
   })
 })
-const revisionsResource = usePrivateResource<PlatformRoutingRevision[]>({
+const revisionsResource = usePrivatePagedList<Record<string, never>, PlatformRoutingRevisionSummary>({
   path: '/api/admin/v1/revisions',
-  defaultData: () => []
+  defaultFilters: {},
+  defaultPageSize: PAGE_SIZE_OPTIONS[0]
 })
 
 const runtime = computed(() => runtimeResource.data.value)
-const revisions = computed(() => revisionsResource.data.value)
+const revisions = computed(() => revisionsResource.items.value)
+const revisionPage = revisionsResource.page
+const revisionPageSize = revisionsResource.pageSize
 const loading = computed(() => (
   runtimeResource.loading.value || revisionsResource.loading.value
 ))
@@ -82,7 +87,7 @@ async function saveDomain(event: FormSubmitEvent<typeof domainState>) {
   }
 }
 
-async function activateRevision(revision: PlatformRoutingRevision) {
+async function activateRevision(revision: PlatformRoutingRevisionSummary) {
   if (revision.id === runtime.value.activeRevisionId) return
 
   await confirm({
@@ -112,7 +117,7 @@ async function activateRevision(revision: PlatformRoutingRevision) {
   })
 }
 
-const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
+const columns = computed<TableColumn<PlatformRoutingRevisionSummary>[]>(() => [
   { id: 'sequence', header: t('admin.apis.routing.columns.revision') },
   { id: 'routes', header: t('admin.apis.routing.columns.routeCount') },
   { id: 'checksum', header: t('admin.apis.routing.columns.checksum') },
@@ -124,31 +129,6 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div class="max-w-3xl">
-        <h1 class="text-2xl font-semibold tracking-tight text-highlighted">
-          {{ $t('admin.apis.routing.sections.revisionsTitle') }}
-        </h1>
-        <p class="mt-2 text-sm leading-6 text-muted">
-          {{ $t('admin.apis.routing.sections.revisionsDescription') }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-refresh-cw"
-          :loading="loading"
-          @click="refresh"
-        >
-          {{ $t('common.actions.refresh') }}
-        </UButton>
-        <UButton to="/admin/apis" icon="i-lucide-waypoints">
-          {{ $t('admin.apis.routing.catalog.actions.manageEndpoints') }}
-        </UButton>
-      </div>
-    </div>
-
     <UAlert
       v-if="resourceError"
       color="error"
@@ -201,13 +181,31 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
     <DashboardTableCard
       :title="$t('admin.apis.routing.sections.revisionsTitle')"
       :description="$t('admin.apis.routing.sections.revisionsDescription')"
-      :total="revisions.length"
+      :total="revisionsResource.total.value"
       icon="i-lucide-history"
     >
+      <template #actions>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-refresh-cw"
+          :loading="loading"
+          @click="refresh"
+        >
+          {{ $t('common.actions.refresh') }}
+        </UButton>
+        <UButton to="/admin/apis" icon="i-lucide-waypoints">
+          {{ $t('admin.apis.routing.catalog.actions.manageEndpoints') }}
+        </UButton>
+      </template>
       <DashboardDataTable
+        v-model:page="revisionPage"
+        v-model:page-size="revisionPageSize"
         :data="revisions"
         :columns="columns"
         :loading="revisionsResource.loading.value"
+        :total="revisionsResource.total.value"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :fixed="false"
         :empty-title="$t('admin.apis.routing.empty.revisionsTitle')"
         :empty-description="$t('admin.apis.routing.empty.revisionsDescription')"
@@ -224,7 +222,7 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
           </div>
         </template>
         <template #routes-cell="{ row }">
-          {{ row.original.configPayload.routes.length }}
+          <span class="tabular-nums">{{ row.original.routeCount }}</span>
         </template>
         <template #checksum-cell="{ row }">
           <span class="font-mono text-xs text-muted">{{ row.original.checksum.slice(0, 12) }}</span>

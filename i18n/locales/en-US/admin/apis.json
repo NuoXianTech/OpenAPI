@@ -52,7 +52,7 @@
         "pageTitle": "API management",
         "eyebrow": "API publishing and governance",
         "title": "Discover, configure, and publish APIs",
-        "description": "Read contracts from Services and directly control public access, statistics, authentication, and credits. A safe runtime snapshot is saved only when the effective configuration changes.",
+        "description": "Read Service contracts; Service-managed changes are applied together, while manual Routes take effect when saved. A safe runtime snapshot is saved only when the effective configuration changes.",
         "moreTargets": "{count} more Targets",
         "fallbackDomain": "Any-Host fallback",
         "published": "Published",
@@ -107,6 +107,9 @@
           "saveRoute": "Save Route",
           "addTarget": "Add Target",
           "removeTarget": "Remove Target",
+          "apiKey": "API key",
+          "deleteRoute": "Delete Route",
+          "deleteRouteUnavailable": "Disable and apply the Route first",
           "publishRevision": "Apply runtime configuration",
           "activateRevision": "Roll back to this snapshot"
         },
@@ -256,7 +259,8 @@
           "createTitle": "Create dynamic Route",
           "createDescription": "Bind a public Method and Path to an Upstream.",
           "editTitle": "Edit dynamic Route",
-          "editDescription": "Change the public path and governance settings. Saving creates a pending change; traffic stays on the previous release until it is applied.",
+          "editDescription": "Change governance settings for a Service-managed Route. Saving creates a pending change; traffic stays on the previous release until it is applied.",
+          "editManualDescription": "Change the public path and governance settings for a manual Route. Saving publishes the change immediately.",
           "namePlaceholder": "For example, Get weather by city",
           "pathHelp": "Supports {'{'}id{'}'} single-segment parameters and {'{'}path+{'}'} trailing wildcard parameters.",
           "hostsHelp": "Optional. Enter one domain per line or separate them with commas; leave empty to use the platform default domain.",
@@ -281,6 +285,10 @@
           "title": "Delete Route {path}",
           "description": "The Route and the active runtime configuration are updated together. Historical runtime snapshots remain available for rollback."
         },
+        "toggleRoute": {
+          "title": "Disable this Route?",
+          "description": "The Route will stop accepting new public requests after it is disabled. Confirm that this is intended."
+        },
         "deleteProduct": {
           "title": "Delete Product: {name}",
           "description": "Only Products without Routes and without references from the active runtime snapshot can be deleted."
@@ -293,9 +301,17 @@
           "title": "Delete Upstream: {name}",
           "description": "Only Upstreams without Routes and without references from the active runtime snapshot can be deleted."
         },
+        "toggleUpstream": {
+          "title": "Change Upstream state: {name}",
+          "description": "Disabling the Upstream stops its active Routes from accepting new public requests."
+        },
         "deleteTarget": {
           "title": "Delete Target",
           "description": "The Target can be removed directly when another ready Target remains. An Upstream used by active Routes must keep at least one available Target."
+        },
+        "toggleTarget": {
+          "title": "Change Target state: {name}",
+          "description": "This changes whether the Target receives traffic and Service configuration updates."
         },
         "feedback": {
           "productCreated": "Product created",
@@ -331,6 +347,7 @@
           "versionRequired": "Select or enter a Version",
           "targetRequired": "Add at least one Target",
           "targetUrlInvalid": "Enter a valid HTTP or HTTPS URL",
+          "publicTargetHttpsRequired": "Public Targets must use HTTPS",
           "weightInvalid": "Weight must be an integer between 1 and 10000",
           "serviceTokenInvalid": "The Service Token must contain at least 32 characters",
           "pathRequired": "Path is required",
@@ -355,6 +372,10 @@
           "notDiscovered": "Not discovered",
           "connectionTitle": "Service integration",
           "connectionDescription": "Discovery means the contract is stored. Runtime status checks both readiness and control-plane authentication for every Target.",
+          "serviceId": "Service ID",
+          "versionCommit": "Version / Commit",
+          "openapiSha256": "OpenAPI SHA-256",
+          "lastDiscoveryErrorTitle": "The latest discovery was not fully successful",
           "runtimeStatus": "Runtime status",
           "availability": {
             "online": "Online",
@@ -366,21 +387,24 @@
           "revisionLabel": "Revision {revision}",
           "configurationNotSaved": "Not saved",
           "replaceToken": "Replace Service Token",
-          "replaceTokenDescription": "This version cannot accept old and new Tokens together. Coordinate the Service and Platform change in a maintenance window, then rediscover and synchronize configuration.",
+          "replaceTokenDescription": "The new Token is used for control-plane verification first; Gateway traffic keeps using the last verified Token. Rediscovery promotes it to the active Token.",
           "updateToken": "Update Token",
           "tokenUpdated": "Service Token updated",
           "tokenUpdateFailed": "Failed to update the Service Token",
           "rediscoverAfterToken": "The connection is pending verification; rediscover and synchronize every Target",
           "discoverySucceeded": "Service contract and configuration schema synchronized",
+          "discoveryPartial": "Service contract synchronized, but some Targets failed discovery",
           "discoveryFailed": "Service discovery failed",
           "discoverFirstTitle": "Connect the Service first",
           "discoverFirstDescription": "The Platform verifies every Target's Service ID, OpenAPI fingerprint, and configuration schema before enabling the generic form.",
           "configurationTitle": "Business capability configuration",
-          "configurationDescription": "Every field is declared by the Service. The Platform contains no music-, IP-, or crypto-specific form code.",
+          "configurationDescription": "Every field is declared by the Service; the Platform contains no business-specific form logic.",
           "syncAllTargets": "Resend to all Targets",
           "saveConfiguration": "Save and apply",
           "configurationSynced": "Configuration synchronized to every Target",
           "configurationDrifted": "Desired configuration saved, but some Targets are not synchronized",
+          "configurationPartial": "Configuration saved, but some Targets are not synchronized",
+          "configurationFailed": "Configuration saved, but no Target synchronized successfully",
           "configurationRevision": "Current desired Revision: {revision}",
           "configurationSaveFailed": "Failed to save Service configuration",
           "configurationSyncFailed": "Failed to synchronize Service configuration",
@@ -418,7 +442,7 @@
         },
         "catalog": {
           "title": "API catalog",
-          "description": "Save endpoint changes as you review them, then apply all changes at once. A new runtime snapshot is saved only when the effective configuration changes.",
+          "description": "Save Service-managed endpoint changes as you review them, then apply them together. Manual Routes take effect when saved. A new runtime snapshot is saved only when the effective configuration changes.",
           "endpointCount": "{count} endpoints",
           "contractMissing": "This endpoint is no longer present in the Service contract. Review it before disabling or adjusting the Route.",
           "manualRoute": "Manually configured proxy endpoint",
@@ -462,7 +486,7 @@
           },
           "feedback": {
             "serviceDiscovered": "Service endpoints synchronized",
-            "discoveryCompleted": "Service sync completed: {succeeded} succeeded, {failed} failed",
+            "discoveryCompleted": "Service sync completed: {succeeded} succeeded, {partial} partial, {failed} failed",
             "published": "Endpoint published",
             "unpublished": "Endpoint disabled",
             "changesApplied": "Endpoint changes applied",

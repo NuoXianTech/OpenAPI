@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 import type { PlatformUpstream, PlatformUpstreamTarget } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import {
@@ -17,14 +18,19 @@ const targetUpstream = ref<PlatformUpstream | null>(null)
 const editingTarget = ref<PlatformUpstreamTarget | null>(null)
 const toast = useToast()
 const confirm = useConfirmDialog()
+const busyKeys = ref(new Set<string>())
 
 useHead({ title: () => t('admin.apis.routing.sections.upstreamsTitle') })
 
-const resource = usePrivateResource<PlatformUpstream[]>({
-  path: '/api/admin/v1/upstreams',
-  defaultData: () => []
+const resource = usePrivatePagedList<Record<string, never>, PlatformUpstream>({
+  path: '/api/admin/v1/upstreams/paged',
+  defaultFilters: {},
+  defaultPageSize: PAGE_SIZE_OPTIONS[0]
 })
-const upstreams = computed(() => resource.data.value)
+const upstreams = computed(() => resource.items.value)
+const page = resource.page
+const pageSize = resource.pageSize
+const total = resource.total
 
 function loadBalancingLabel(upstream: PlatformUpstream): string {
   return t(`admin.apis.routing.loadBalancing.${upstream.loadBalancing === 'weighted' ? 'weighted' : 'roundRobin'}`)
@@ -85,29 +91,59 @@ async function refreshUpstreams() {
 }
 
 async function updateUpstreamStatus(upstream: PlatformUpstream) {
-  try {
-    await $fetch(`/api/admin/v1/upstreams/${upstream.id}`, {
-      method: 'PATCH',
-      body: { status: upstream.status === 'active' ? 'disabled' : 'active' }
-    })
-    toast.add({ title: t('common.feedback.updated'), color: 'success' })
-    await refreshUpstreams()
-  } catch (error: unknown) {
-    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
-  }
+  await confirm({
+    title: t('admin.apis.routing.toggleUpstream.title', { name: upstream.name }),
+    description: t('admin.apis.routing.toggleUpstream.description'),
+    confirmLabel: t(upstream.status === 'active' ? 'common.actions.disable' : 'common.actions.enable'),
+    confirmColor: upstream.status === 'active' ? 'warning' : 'primary',
+    onConfirm: async () => {
+      const key = `upstream:${upstream.id}:status`
+      busyKeys.value = new Set(busyKeys.value).add(key)
+      try {
+        await $fetch(`/api/admin/v1/upstreams/${upstream.id}`, {
+          method: 'PATCH',
+          body: { status: upstream.status === 'active' ? 'disabled' : 'active' }
+        })
+        toast.add({ title: t('common.feedback.updated'), color: 'success' })
+        await refreshUpstreams()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+        throw error
+      } finally {
+        const next = new Set(busyKeys.value)
+        next.delete(key)
+        busyKeys.value = next
+      }
+    }
+  })
 }
 
 async function updateTargetStatus(target: PlatformUpstreamTarget) {
-  try {
-    await $fetch(`/api/admin/v1/targets/${target.id}`, {
-      method: 'PATCH',
-      body: { enabled: !target.enabled }
-    })
-    toast.add({ title: t('common.feedback.updated'), color: 'success' })
-    await refreshUpstreams()
-  } catch (error: unknown) {
-    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
-  }
+  await confirm({
+    title: t('admin.apis.routing.toggleTarget.title', { name: target.baseUrl }),
+    description: t('admin.apis.routing.toggleTarget.description'),
+    confirmLabel: t(target.enabled ? 'common.actions.disable' : 'common.actions.enable'),
+    confirmColor: target.enabled ? 'warning' : 'primary',
+    onConfirm: async () => {
+      const key = `target:${target.id}:status`
+      busyKeys.value = new Set(busyKeys.value).add(key)
+      try {
+        await $fetch(`/api/admin/v1/targets/${target.id}`, {
+          method: 'PATCH',
+          body: { enabled: !target.enabled }
+        })
+        toast.add({ title: t('common.feedback.updated'), color: 'success' })
+        await refreshUpstreams()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+        throw error
+      } finally {
+        const next = new Set(busyKeys.value)
+        next.delete(key)
+        busyKeys.value = next
+      }
+    }
+  })
 }
 
 async function removeUpstream(upstream: PlatformUpstream) {
@@ -155,6 +191,7 @@ function upstreamItems(upstream: PlatformUpstream): DropdownMenuItem[][] {
     {
       label: t(upstream.status === 'active' ? 'common.actions.disable' : 'common.actions.enable'),
       icon: upstream.status === 'active' ? 'i-lucide-pause' : 'i-lucide-play',
+      disabled: busyKeys.value.has(`upstream:${upstream.id}:status`),
       onSelect: () => updateUpstreamStatus(upstream)
     }
   ], [
@@ -168,6 +205,7 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
     {
       label: t(target.enabled ? 'common.actions.disable' : 'common.actions.enable'),
       icon: target.enabled ? 'i-lucide-pause' : 'i-lucide-play',
+      disabled: busyKeys.value.has(`target:${target.id}:status`),
       onSelect: () => updateTargetStatus(target)
     },
     { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeTarget(target) }
@@ -177,31 +215,6 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div class="max-w-3xl">
-        <h1 class="text-2xl font-semibold tracking-tight text-highlighted">
-          {{ $t('admin.apis.routing.sections.upstreamsTitle') }}
-        </h1>
-        <p class="mt-2 text-sm leading-6 text-muted">
-          {{ $t('admin.apis.routing.sections.upstreamsDescription') }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-refresh-cw"
-          :loading="resource.loading.value"
-          @click="resource.refresh"
-        >
-          {{ $t('common.actions.refresh') }}
-        </UButton>
-        <UButton icon="i-lucide-plus" @click="openCreateUpstream">
-          {{ $t('admin.apis.routing.actions.createUpstream') }}
-        </UButton>
-      </div>
-    </div>
-
     <UAlert
       color="info"
       variant="subtle"
@@ -233,13 +246,31 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
     <DashboardTableCard
       :title="$t('admin.apis.routing.sections.upstreamsTitle')"
       :description="$t('admin.apis.routing.sections.upstreamsDescription')"
-      :total="upstreams.length"
+      :total="total"
       icon="i-lucide-server-cog"
     >
+      <template #actions>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-refresh-cw"
+          :loading="resource.loading.value"
+          @click="resource.refresh"
+        >
+          {{ $t('common.actions.refresh') }}
+        </UButton>
+        <UButton icon="i-lucide-plus" @click="openCreateUpstream">
+          {{ $t('admin.apis.routing.actions.createUpstream') }}
+        </UButton>
+      </template>
       <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
         :data="upstreams"
         :columns="columns"
         :loading="resource.loading.value"
+        :total="total"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :fixed="false"
         :empty-title="$t('admin.apis.routing.empty.upstreamsTitle')"
         :empty-description="$t('admin.apis.routing.empty.upstreamsDescription')"
@@ -277,6 +308,15 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
                 >
                   {{ target.weight }}
                 </UBadge>
+                <UBadge
+                  color="neutral"
+                  variant="subtle"
+                  size="sm"
+                >
+                  {{ $t(target.enabled
+                    ? 'admin.apis.routing.serviceControl.enabled'
+                    : 'common.states.disabled') }}
+                </UBadge>
               </div>
             </UDropdownMenu>
           </div>
@@ -310,6 +350,7 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
                 color="neutral"
                 variant="ghost"
                 size="xs"
+                :aria-label="$t('common.actions.more')"
               />
             </UDropdownMenu>
           </div>

@@ -8,6 +8,7 @@ import type {
   PlatformRoute,
   PlatformRouteBinding,
   PlatformRoutingRevision,
+  PlatformRoutingRevisionSummary,
   PlatformUpstream,
   PlatformUpstreamSummary,
   PlatformUpstreamTarget
@@ -168,6 +169,20 @@ export function toPlatformRoutingRevision(row: RevisionRow): PlatformRoutingRevi
     id: row.id,
     sequence: row.sequence,
     configPayload: row.configPayload,
+    checksum: row.checksum,
+    createdBy: row.createdBy,
+    createdAt: toIsoString(row.createdAt),
+    publishedAt: toIsoString(row.publishedAt)
+  }
+}
+
+export function toPlatformRoutingRevisionSummary(
+  row: RevisionRow
+): PlatformRoutingRevisionSummary {
+  return {
+    id: row.id,
+    sequence: row.sequence,
+    routeCount: row.configPayload.routes.length,
     checksum: row.checksum,
     createdBy: row.createdBy,
     createdAt: toIsoString(row.createdAt),

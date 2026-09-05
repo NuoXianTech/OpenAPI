@@ -20,6 +20,7 @@ const props = defineProps<{
   products: PlatformProduct[]
   upstreams: PlatformUpstream[]
   routeBinding?: PlatformRouteBinding | null
+  initialUpstreamId?: string | null
 }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
@@ -60,7 +61,10 @@ watch(open, (isOpen) => {
       state.apiVersionId = versionItems.value[0]?.value ?? ''
     }
     if (!isEditing.value && !upstreamItems.value.some(item => item.value === state.upstreamServiceId)) {
-      state.upstreamServiceId = upstreamItems.value[0]?.value ?? ''
+      state.upstreamServiceId = props.initialUpstreamId
+        && upstreamItems.value.some(item => item.value === props.initialUpstreamId)
+        ? props.initialUpstreamId
+        : upstreamItems.value[0]?.value ?? ''
     }
     advancedOpen.value = isEditing.value
   }
@@ -71,7 +75,10 @@ watch([versionItems, upstreamItems], () => {
     state.apiVersionId = versionItems.value[0]?.value ?? ''
   }
   if (!upstreamItems.value.some(item => item.value === state.upstreamServiceId)) {
-    state.upstreamServiceId = upstreamItems.value[0]?.value ?? ''
+    state.upstreamServiceId = props.initialUpstreamId
+      && upstreamItems.value.some(item => item.value === props.initialUpstreamId)
+      ? props.initialUpstreamId
+      : upstreamItems.value[0]?.value ?? ''
   }
 }, { immediate: true })
 
@@ -186,7 +193,11 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
   <UModal
     v-model:open="open"
     :title="$t(isEditing ? 'admin.apis.routing.routeForm.editTitle' : 'admin.apis.routing.routeForm.createTitle')"
-    :description="$t(isEditing ? 'admin.apis.routing.routeForm.editDescription' : 'admin.apis.routing.routeForm.createDescription')"
+    :description="$t(isEditing
+      ? (isServiceManaged
+        ? 'admin.apis.routing.routeForm.editDescription'
+        : 'admin.apis.routing.routeForm.editManualDescription')
+      : 'admin.apis.routing.routeForm.createDescription')"
     :dismissible="!loading"
     :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
   >

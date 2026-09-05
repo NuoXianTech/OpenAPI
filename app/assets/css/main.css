@@ -146,12 +146,14 @@ kbd,
 }
 
 .dashboard-navbar {
-  background: color-mix(in oklab, var(--ui-bg) 94%, transparent);
-  backdrop-filter: blur(12px);
+  min-height: 3.75rem;
+  border-bottom-color: var(--ui-border);
+  background: color-mix(in oklab, var(--ui-bg) 90%, transparent);
+  backdrop-filter: blur(16px) saturate(120%);
 }
 
 .dashboard-toolbar {
-  background: color-mix(in oklab, var(--ui-bg-elevated) 80%, var(--ui-bg) 20%);
+  background: color-mix(in oklab, var(--ui-bg-elevated) 72%, var(--ui-bg) 28%);
 }
 
 .dashboard-section-navbar {
@@ -199,7 +201,7 @@ kbd,
   background: var(--dashboard-surface);
   border: 1px solid var(--dashboard-border);
   border-radius: var(--dashboard-radius);
-  box-shadow: var(--dashboard-shadow);
+  box-shadow: none;
 }
 
 .dashboard-gradient-alert {
@@ -233,7 +235,7 @@ kbd,
   border-color: var(--dashboard-border);
   border-radius: var(--dashboard-radius);
   background: var(--dashboard-surface);
-  box-shadow: var(--dashboard-shadow);
+  box-shadow: none;
 }
 
 .dashboard-table-card :where([data-slot="header"]) {
@@ -289,7 +291,7 @@ kbd,
   border: 1px solid var(--dashboard-border);
   border-radius: var(--dashboard-radius);
   background: var(--dashboard-surface);
-  box-shadow: var(--dashboard-shadow);
+  box-shadow: none;
 }
 
 .dashboard-oauth-provider-divider {
@@ -451,18 +453,6 @@ kbd,
   transform: translateY(10px);
 }
 
-.dashboard-navbar {
-  min-height: 3.75rem;
-  border-bottom-color: var(--ui-border);
-  background: color-mix(in oklab, var(--ui-bg) 90%, transparent);
-  backdrop-filter: blur(16px) saturate(120%);
-}
-
-.dashboard-toolbar { background: color-mix(in oklab, var(--ui-bg-elevated) 72%, var(--ui-bg) 28%); }
-.dashboard-action-bar,
-.dashboard-table-card,
-.dashboard-oauth-provider-card { box-shadow: none; }
-
 .dashboard-hero-surface {
   isolation: isolate;
   border-color: var(--dashboard-border);
@@ -479,17 +469,18 @@ kbd,
     0 24px 48px -46px color-mix(in oklab, var(--ui-text) 42%, transparent);
 }
 
+/* Keep dashboard surfaces compact without redefining Tailwind radii globally. */
+.dashboard-shell .rounded-xl,
+.dashboard-shell .rounded-2xl,
+.dashboard-shell .rounded-3xl {
+  border-radius: 0.5rem;
+}
+
 .dark .dashboard-hero-surface {
   box-shadow:
     var(--dashboard-shadow),
     inset 0 1px 0 color-mix(in oklab, white 7%, transparent),
     0 24px 48px -44px color-mix(in oklab, black 64%, transparent);
-}
-
-.rounded-xl,
-.rounded-2xl,
-.rounded-3xl {
-  border-radius: 0.5rem;
 }
 
 .public-page {

@@ -165,6 +165,23 @@ export interface PlatformEndpointPublicationResult {
   created?: boolean
 }
 
+export interface PlatformEndpointPublicationPatch {
+  enabled?: boolean
+  name?: string
+  isApiKey?: boolean
+  isStatistics?: boolean
+  creditsCost?: number
+  rateLimitPerSecond?: number
+  rateLimitPerMinute?: number
+  rateLimitPerHour?: number
+  rateLimitPerDay?: number
+  timeoutMs?: number
+  maxRequestBytes?: number
+  maxResponseBytes?: number
+  catalogStatus?: 'automatic' | 'maintenance'
+  sensitiveQueryParameters?: string[]
+}
+
 interface PlatformRoutingRevisionPayload {
   schemaVersion: 1
   revisionId: string
@@ -177,6 +194,16 @@ export interface PlatformRoutingRevision {
   id: string
   sequence: number
   configPayload: PlatformRoutingRevisionPayload
+  checksum: string
+  createdBy: number | null
+  createdAt: string
+  publishedAt: string
+}
+
+export interface PlatformRoutingRevisionSummary {
+  id: string
+  sequence: number
+  routeCount: number
   checksum: string
   createdBy: number | null
   createdAt: string

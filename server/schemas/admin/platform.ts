@@ -146,7 +146,7 @@ export const adminUpdateEndpointPublicationSchema = z.object({
   sensitiveQueryParameters: z.array(
     z.string().trim().min(1).max(ROUTE_CONSTRAINTS.SENSITIVE_PARAM_MAX_LENGTH)
   ).max(ROUTE_CONSTRAINTS.SENSITIVE_PARAMS_MAX_COUNT).optional()
-})
+}).refine(value => Object.keys(value).length > 0, 'at least one field is required')
 
 export const adminActivateRevisionSchema = z.object({
   revisionId: z.uuid()

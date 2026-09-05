@@ -3,11 +3,13 @@ import type {
   PlatformEndpointCatalog,
   PlatformEndpointCatalogItem,
   PlatformEndpointCatalogService,
+  PlatformEndpointPublicationPatch,
   PlatformEndpointPublicationResult,
   PlatformProduct,
   PlatformRouteBinding
 } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
+import type { ServiceConfigurationView } from '#shared/types/service-control'
 
 function emptyCatalog(): PlatformEndpointCatalog {
   return {
@@ -30,6 +32,7 @@ export function useAdminEndpointCatalogPage() {
   const route = useRoute()
   const router = useRouter()
   const toast = useToast()
+  const confirm = useConfirmDialog()
   const catalogResource = usePrivateResource<PlatformEndpointCatalog>({
     path: '/api/admin/v1/service-endpoints',
     defaultData: emptyCatalog
@@ -43,6 +46,7 @@ export function useAdminEndpointCatalogPage() {
   const busyKeys = ref(new Set<string>())
   const routeModalOpen = ref(false)
   const editingRoute = ref<PlatformRouteBinding | null>(null)
+  const createRouteUpstreamId = ref<string | null>(null)
 
   const catalog = computed(() => catalogResource.data.value)
   const products = computed(() => productsResource.data.value)
@@ -65,9 +69,13 @@ export function useAdminEndpointCatalogPage() {
   const requiresDiscovery = computed(() => allDrift.value.some(
     item => item.kind === 'address_changed'
   ))
+  const applyChangeCount = computed(() => (
+    catalog.value.totals.pending
+    + allDrift.value.filter(item => item.kind !== 'address_changed').length
+  ))
   const canApply = computed(() => (
-    catalog.value.totals.pending > 0
-    || allDrift.value.some(item => item.kind !== 'address_changed')
+    !requiresDiscovery.value
+    && applyChangeCount.value > 0
   ))
   const loading = computed(() => (
     catalogResource.loading.value
@@ -120,12 +128,15 @@ export function useAdminEndpointCatalogPage() {
       })
       .filter(service => (
         service.endpoints.length > 0
-        || (!search.value && statusFilter.value === 'all')
+        || (!keyword && statusFilter.value === 'all')
       ))
   })
 
   watch(routeModalOpen, (open) => {
-    if (!open) editingRoute.value = null
+    if (!open) {
+      editingRoute.value = null
+      createRouteUpstreamId.value = null
+    }
   })
 
   function setBusy(key: string, value: boolean) {
@@ -167,17 +178,20 @@ export function useAdminEndpointCatalogPage() {
     const key = `discover:${upstreamId}`
     setBusy(key, true)
     try {
-      await $fetch(`/api/admin/v1/upstreams/${upstreamId}/discover`, {
-        method: 'POST'
-      })
+      const result = await $fetch<ServiceConfigurationView>(
+        `/api/admin/v1/upstreams/${upstreamId}/discover`,
+        { method: 'POST' }
+      )
       if (!quiet) {
         toast.add({
-          title: t('admin.apis.routing.catalog.feedback.serviceDiscovered'),
-          color: 'success'
+          title: result.connection.lastDiscoveryError
+            ? t('admin.apis.routing.serviceControl.discoveryPartial')
+            : t('admin.apis.routing.catalog.feedback.serviceDiscovered'),
+          color: result.connection.lastDiscoveryError ? 'warning' : 'success'
         })
         await refresh()
       }
-      return true
+      return result.connection.lastDiscoveryError ? 'partial' as const : true
     } catch (error: unknown) {
       if (!quiet) {
         toast.add({
@@ -200,20 +214,27 @@ export function useAdminEndpointCatalogPage() {
     const key = 'discover:all'
     setBusy(key, true)
     try {
-      const results = await Promise.all(
-        serviceUpstreams.value.map(
-          upstream => discoverService(upstream.id, true)
-        )
-      )
+      const results: Array<boolean | 'partial'> = []
+      const queue = [...serviceUpstreams.value]
+      const worker = async () => {
+        while (queue.length > 0) {
+          const upstream = queue.shift()
+          if (!upstream) return
+          results.push(await discoverService(upstream.id, true))
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(4, queue.length) }, worker))
       await refresh()
       const succeeded = results.filter(Boolean).length
-      const failed = results.length - succeeded
+      const partial = results.filter(result => result === 'partial').length
+      const failed = results.filter(result => result === false).length
       toast.add({
         title: t('admin.apis.routing.catalog.feedback.discoveryCompleted', {
-          succeeded,
+          succeeded: succeeded - partial,
+          partial,
           failed
         }),
-        color: failed > 0 ? 'warning' : 'success'
+        color: failed > 0 ? 'error' : partial > 0 ? 'warning' : 'success'
       })
     } finally {
       setBusy(key, false)
@@ -244,7 +265,7 @@ export function useAdminEndpointCatalogPage() {
     try {
       // Publication is idempotent: an unchanged payload returns the active
       // revision, so only a new id means the runtime actually moved.
-      const result = await $fetch(
+      const result = await $fetch<{ revision: { id: string } }>(
         '/api/admin/v1/service-endpoints/apply',
         { method: 'POST' }
       )
@@ -315,11 +336,11 @@ export function useAdminEndpointCatalogPage() {
 
   async function updatePublication(
     item: PlatformEndpointCatalogItem,
-    patch: Record<string, unknown>,
+    patch: PlatformEndpointPublicationPatch,
     successKey: string
-  ) {
+  ): Promise<boolean> {
     const routeId = item.route?.route.id
-    if (!routeId) return
+    if (!routeId) return false
     const key = `endpoint:${item.key}`
     setBusy(key, true)
     try {
@@ -329,6 +350,7 @@ export function useAdminEndpointCatalogPage() {
       )
       showPublicationResult(result, successKey)
       await refresh()
+      return true
     } catch (error: unknown) {
       toast.add({
         title: parseFetchError(
@@ -338,6 +360,7 @@ export function useAdminEndpointCatalogPage() {
         color: 'error'
       })
       await catalogResource.refresh()
+      return false
     } finally {
       setBusy(key, false)
     }
@@ -355,17 +378,58 @@ export function useAdminEndpointCatalogPage() {
       return
     }
     const enabled = item.status !== 'live'
-    await updatePublication(
+    const update = () => updatePublication(
       item,
       { enabled },
       enabled
         ? 'admin.apis.routing.catalog.feedback.published'
         : 'admin.apis.routing.catalog.feedback.unpublished'
     )
+    if (enabled) {
+      await update()
+      return
+    }
+    await confirm({
+      title: t('admin.apis.routing.toggleRoute.title'),
+      description: t('admin.apis.routing.toggleRoute.description'),
+      confirmLabel: t('common.actions.disable'),
+      confirmColor: 'warning',
+      onConfirm: async () => {
+        if (!await update()) throw new Error('route update failed')
+      }
+    })
   }
 
-  function openCreateRoute() {
+  async function removeRoute(item: PlatformEndpointCatalogItem) {
+    const route = item.route?.route
+    if (!route || route.managedBy !== 'manual' || item.status !== 'disabled') return
+    await confirm({
+      title: t('admin.apis.routing.deleteRoute.title', { path: route.pathPattern }),
+      description: t('admin.apis.routing.deleteRoute.description'),
+      confirmColor: 'error',
+      onConfirm: async () => {
+        const key = `endpoint:${item.key}`
+        setBusy(key, true)
+        try {
+          await $fetch(`/api/admin/v1/routes/${route.id}`, { method: 'DELETE' })
+          toast.add({ title: t('admin.apis.routing.feedback.routeDeleted'), color: 'success' })
+          await refresh()
+        } catch (error: unknown) {
+          toast.add({
+            title: parseFetchError(error, t('admin.apis.routing.feedback.deleteFailed')),
+            color: 'error'
+          })
+          throw error
+        } finally {
+          setBusy(key, false)
+        }
+      }
+    })
+  }
+
+  function openCreateRoute(upstreamId?: string) {
     editingRoute.value = null
+    createRouteUpstreamId.value = upstreamId ?? null
     routeModalOpen.value = true
   }
 
@@ -388,6 +452,7 @@ export function useAdminEndpointCatalogPage() {
 
   return {
     applyChanges,
+    applyChangeCount,
     canApply,
     catalog,
     clearFocusedService,
@@ -395,6 +460,7 @@ export function useAdminEndpointCatalogPage() {
     discoverService,
     driftedServices,
     editingRoute,
+    createRouteUpstreamId,
     focusedUpstreamId,
     handlePrimaryAction,
     serviceUpstreams,
@@ -402,6 +468,7 @@ export function useAdminEndpointCatalogPage() {
     loading,
     openCreateRoute,
     openEditRoute,
+    removeRoute,
     products,
     refresh,
     requiresDiscovery,

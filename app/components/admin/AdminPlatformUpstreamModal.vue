@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import type { PlatformUpstreamSummary } from '#shared/types/platform'
+import { validateUpstreamTargetUrl } from '#shared/utils/upstream-target'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError } from '~/utils/form-validation'
@@ -58,15 +59,6 @@ function removeTarget(index: number) {
   if (state.targets.length > 1) state.targets.splice(index, 1)
 }
 
-function parseTargetUrl(value: string): URL | null {
-  try {
-    const url = new URL(value)
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null
-  } catch {
-    return null
-  }
-}
-
 function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<string>[] {
   const errors = compactFormErrors(
     requiredTextError('name', value.name, t('admin.apis.routing.validation.nameRequired')),
@@ -95,9 +87,14 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
 
   targets.forEach((target, index) => {
     const name = `targets.${index}.baseUrl`
-    const url = parseTargetUrl(target.baseUrl?.trim() ?? '')
-    if (!url) {
-      errors.push({ name, message: t('admin.apis.routing.validation.targetUrlInvalid') })
+    const validation = validateUpstreamTargetUrl(target.baseUrl?.trim() ?? '')
+    if (target.baseUrl?.trim() && validation.issue) {
+      errors.push({
+        name,
+        message: validation.issue === 'publicHttp'
+          ? t('admin.apis.routing.validation.publicTargetHttpsRequired')
+          : t('admin.apis.routing.validation.targetUrlInvalid')
+      })
     }
     const weightError = integerRangeError(
       `targets.${index}.weight`,

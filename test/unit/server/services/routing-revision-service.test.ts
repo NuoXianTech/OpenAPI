@@ -232,6 +232,26 @@ function routeMutationInput(route: typeof schema.apiRoutes.$inferSelect) {
 }
 
 describe('routing revision service', () => {
+  it('returns bounded management list pages with stable totals', async () => {
+    await createRoutingGraph({ productSlug: 'paged-management' })
+    await applyPlatformRevision(null)
+
+    const products = await platformProductService.listPage({ limit: 1, offset: 0 })
+    const upstreams = await platformUpstreamService.listPage({
+      checkAvailability: false,
+      limit: 1,
+      offset: 0
+    })
+    const revisions = await routingRevisionService.listPage({ limit: 1, offset: 0 })
+
+    expect(products.total).toBe(1)
+    expect(products.items).toHaveLength(1)
+    expect(upstreams.total).toBe(1)
+    expect(upstreams.items).toHaveLength(1)
+    expect(revisions.total).toBe(1)
+    expect(revisions.items).toHaveLength(1)
+  })
+
   it('keeps an unverified Service-managed Target out of published routing', async () => {
     const graph = await createRoutingGraph({ verified: false })
 
@@ -548,6 +568,24 @@ describe('routing revision service', () => {
     expect(secondRevision.configPayload.upstreams.find(
       upstream => upstream.id === changing.upstream.id
     )?.targets[0]?.baseUrl).toBe('http://127.0.0.1:8082')
+  })
+
+  it('does not keep a disabled Service-managed Target in the runtime fallback', async () => {
+    const graph = await createRoutingGraph({
+      productSlug: 'disabled-runtime-target'
+    })
+    const firstRevision = await routingRevisionService.publish(null)
+
+    await database.update(schema.upstreamTargets).set({
+      enabled: false,
+      configurationStatus: 'error'
+    }).where(eq(schema.upstreamTargets.upstreamServiceId, graph.upstream.id))
+
+    const secondRevision = await routingRevisionService.publish(null)
+
+    expect(secondRevision.id).not.toBe(firstRevision.id)
+    expect(secondRevision.configPayload.upstreams).toHaveLength(0)
+    expect(secondRevision.configPayload.routes).toHaveLength(0)
   })
 
   it('serializes concurrent publication and preserves one active revision', async () => {

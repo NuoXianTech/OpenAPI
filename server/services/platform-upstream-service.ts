@@ -1,4 +1,4 @@
-import { and, asc, count, eq, isNull, ne } from 'drizzle-orm'
+import { and, asc, count, eq, inArray, isNull, ne } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   upstreamServiceConnections,
@@ -123,8 +123,15 @@ export const platformUpstreamService = {
       .limit(1)))
   },
   async list(
-    options: { checkAvailability?: boolean } = {}
+    options: { checkAvailability?: boolean, ids?: string[] } = {}
   ): Promise<UpstreamView[]> {
+    if (options.ids?.length === 0) return []
+    const serviceFilter = options.ids === undefined
+      ? isNull(upstreamServices.deletedAt)
+      : and(
+          isNull(upstreamServices.deletedAt),
+          inArray(upstreamServices.id, options.ids)
+        )
     const rows = await db.select({
       service: upstreamServices,
       target: upstreamTargets,
@@ -136,7 +143,7 @@ export const platformUpstreamService = {
         upstreamServiceConnections.upstreamServiceId,
         upstreamServices.id
       ))
-      .where(isNull(upstreamServices.deletedAt))
+      .where(serviceFilter)
       .orderBy(asc(upstreamServices.name), asc(upstreamTargets.createdAt))
 
     const result = new Map<string, typeof upstreamServices.$inferSelect & {
@@ -173,6 +180,34 @@ export const platformUpstreamService = {
           : null
       }
     }))
+  },
+
+  async listPage(options: { checkAvailability?: boolean, limit: number, offset: number }) {
+    const [rows, totalRow] = await Promise.all([
+      db.select({ id: upstreamServices.id })
+        .from(upstreamServices)
+        .where(isNull(upstreamServices.deletedAt))
+        .orderBy(asc(upstreamServices.name), asc(upstreamServices.id))
+        .limit(options.limit)
+        .offset(options.offset),
+      db.select({ value: count() }).from(upstreamServices)
+        .where(isNull(upstreamServices.deletedAt))
+    ])
+    const ids = rows.map(row => row.id)
+    const items = ids.length === 0
+      ? []
+      : await platformUpstreamService.list({
+          checkAvailability: options.checkAvailability,
+          ids
+        })
+    const order = new Map(ids.map((id, index) => [id, index]))
+    items.sort((left, right) => (
+      (order.get(left.id) ?? 0) - (order.get(right.id) ?? 0)
+    ))
+    return {
+      items,
+      total: Number(firstRow(totalRow)?.value ?? 0)
+    }
   },
 
   async create(input: CreateUpstreamInput) {

@@ -1,4 +1,4 @@
-import { and, asc, count, eq, isNull } from 'drizzle-orm'
+import { and, asc, count, eq, inArray, isNull } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { apiProducts, apiRoutes, apiVersions } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
@@ -56,6 +56,21 @@ function lifecycleDates(state: CreateVersionInput['state'], now = new Date()) {
   }
 }
 
+function groupProducts(rows: Array<{
+  product: typeof apiProducts.$inferSelect
+  version: typeof apiVersions.$inferSelect | null
+}>) {
+  const result = new Map<string, typeof apiProducts.$inferSelect & {
+    versions: Array<typeof apiVersions.$inferSelect>
+  }>()
+  for (const row of rows) {
+    const item = result.get(row.product.id) ?? { ...row.product, versions: [] }
+    if (row.version) item.versions.push(row.version)
+    result.set(row.product.id, item)
+  }
+  return Array.from(result.values())
+}
+
 export const platformProductService = {
   async list() {
     const rows = await db.select({ product: apiProducts, version: apiVersions })
@@ -64,15 +79,38 @@ export const platformProductService = {
       .where(isNull(apiProducts.deletedAt))
       .orderBy(asc(apiProducts.name), asc(apiVersions.version))
 
-    const result = new Map<string, typeof apiProducts.$inferSelect & {
-      versions: Array<typeof apiVersions.$inferSelect>
-    }>()
-    for (const row of rows) {
-      const item = result.get(row.product.id) ?? { ...row.product, versions: [] }
-      if (row.version) item.versions.push(row.version)
-      result.set(row.product.id, item)
+    return groupProducts(rows)
+  },
+
+  async listPage(options: { limit: number, offset: number }) {
+    const [products, totalRow] = await Promise.all([
+      db.select().from(apiProducts)
+        .where(isNull(apiProducts.deletedAt))
+        .orderBy(asc(apiProducts.name), asc(apiProducts.id))
+        .limit(options.limit)
+        .offset(options.offset),
+      db.select({ value: count() }).from(apiProducts)
+        .where(isNull(apiProducts.deletedAt))
+    ])
+    const ids = products.map(product => product.id)
+    const versions = ids.length === 0
+      ? []
+      : await db.select().from(apiVersions)
+          .where(inArray(apiVersions.productId, ids))
+          .orderBy(asc(apiVersions.version))
+    const versionByProduct = new Map<string, typeof apiVersions.$inferSelect[]>()
+    for (const version of versions) {
+      const list = versionByProduct.get(version.productId) ?? []
+      list.push(version)
+      versionByProduct.set(version.productId, list)
     }
-    return Array.from(result.values())
+    return {
+      items: products.map(product => ({
+        ...product,
+        versions: versionByProduct.get(product.id) ?? []
+      })),
+      total: Number(firstRow(totalRow)?.value ?? 0)
+    }
   },
 
   async create(input: CreateProductInput) {

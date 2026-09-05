@@ -33,6 +33,7 @@ const synchronizing = ref(false)
 const saving = ref(false)
 const updatingToken = ref(false)
 const serviceToken = ref('')
+const targetBusy = ref(new Set<string>())
 const businessEndpoints = computed(() =>
   resource.data.value?.endpoints.filter(endpoint => (
     !endpoint.system && !endpoint.support
@@ -75,16 +76,32 @@ async function refreshTargets() {
 }
 
 async function updateTargetStatus(target: PlatformUpstreamTarget) {
-  try {
-    await $fetch(`/api/admin/v1/targets/${target.id}`, {
-      method: 'PATCH',
-      body: { enabled: !target.enabled }
-    })
-    toast.add({ title: t('common.feedback.updated'), color: 'success' })
-    await refreshTargets()
-  } catch (error: unknown) {
-    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
-  }
+  await confirm({
+    title: t('admin.apis.routing.toggleTarget.title', { name: target.baseUrl }),
+    description: t('admin.apis.routing.toggleTarget.description'),
+    confirmLabel: t(target.enabled ? 'common.actions.disable' : 'common.actions.enable'),
+    confirmColor: target.enabled ? 'warning' : 'primary',
+    onConfirm: async () => {
+      const next = new Set(targetBusy.value)
+      next.add(target.id)
+      targetBusy.value = next
+      try {
+        await $fetch(`/api/admin/v1/targets/${target.id}`, {
+          method: 'PATCH',
+          body: { enabled: !target.enabled }
+        })
+        toast.add({ title: t('common.feedback.updated'), color: 'success' })
+        await refreshTargets()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+        throw error
+      } finally {
+        const updated = new Set(targetBusy.value)
+        updated.delete(target.id)
+        targetBusy.value = updated
+      }
+    }
+  })
 }
 
 async function removeTarget(target: PlatformUpstreamTarget) {
@@ -111,6 +128,7 @@ function targetItems(target: PlatformUpstreamTarget) {
     {
       label: t(target.enabled ? 'common.actions.disable' : 'common.actions.enable'),
       icon: target.enabled ? 'i-lucide-pause' : 'i-lucide-play',
+      disabled: targetBusy.value.has(target.id),
       onSelect: () => updateTargetStatus(target)
     },
     { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => removeTarget(target) }
@@ -172,8 +190,10 @@ async function discover() {
     )
     resource.data.value = result
     toast.add({
-      title: t('admin.apis.routing.serviceControl.discoverySucceeded'),
-      color: 'success'
+      title: result.connection.lastDiscoveryError
+        ? t('admin.apis.routing.serviceControl.discoveryPartial')
+        : t('admin.apis.routing.serviceControl.discoverySucceeded'),
+      color: result.connection.lastDiscoveryError ? 'warning' : 'success'
     })
   } catch (error: unknown) {
     toast.add({
@@ -237,12 +257,16 @@ async function saveConfiguration(payload: {
     toast.add({
       title: result.status === 'synced'
         ? t('admin.apis.routing.serviceControl.configurationSynced')
-        : t('admin.apis.routing.serviceControl.configurationDrifted'),
+        : result.status === 'partial'
+          ? t('admin.apis.routing.serviceControl.configurationPartial')
+          : t('admin.apis.routing.serviceControl.configurationFailed'),
       description: t(
         'admin.apis.routing.serviceControl.configurationRevision',
         { revision: result.revision }
       ),
-      color: result.status === 'synced' ? 'success' : 'warning'
+      color: result.status === 'synced'
+        ? 'success'
+        : result.status === 'partial' ? 'warning' : 'error'
     })
     await resource.refresh()
   } catch (error: unknown) {
@@ -268,8 +292,12 @@ async function synchronizeConfiguration() {
     toast.add({
       title: result.status === 'synced'
         ? t('admin.apis.routing.serviceControl.configurationSynced')
-        : t('admin.apis.routing.serviceControl.configurationDrifted'),
-      color: result.status === 'synced' ? 'success' : 'warning'
+        : result.status === 'partial'
+          ? t('admin.apis.routing.serviceControl.configurationPartial')
+          : t('admin.apis.routing.serviceControl.configurationFailed'),
+      color: result.status === 'synced'
+        ? 'success'
+        : result.status === 'partial' ? 'warning' : 'error'
     })
     await resource.refresh()
   } catch (error: unknown) {
@@ -393,7 +421,7 @@ async function synchronizeConfiguration() {
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div>
             <p class="text-xs text-muted">
-              Service ID
+              {{ $t('admin.apis.routing.serviceControl.serviceId') }}
             </p>
             <p class="mt-1 break-all font-mono text-sm text-highlighted">
               {{ resource.data.value.connection.serviceId || '—' }}
@@ -401,7 +429,7 @@ async function synchronizeConfiguration() {
           </div>
           <div>
             <p class="text-xs text-muted">
-              Version / Commit
+              {{ $t('admin.apis.routing.serviceControl.versionCommit') }}
             </p>
             <p class="mt-1 font-mono text-sm text-highlighted">
               {{ resource.data.value.connection.serviceVersion || '—' }}
@@ -411,9 +439,12 @@ async function synchronizeConfiguration() {
           </div>
           <div>
             <p class="text-xs text-muted">
-              OpenAPI SHA-256
+              {{ $t('admin.apis.routing.serviceControl.openapiSha256') }}
             </p>
-            <p class="mt-1 truncate font-mono text-sm text-highlighted">
+            <p
+              class="mt-1 truncate font-mono text-sm text-highlighted"
+              :title="resource.data.value.connection.openapiSha256 || undefined"
+            >
               {{ resource.data.value.connection.openapiSha256 || '—' }}
             </p>
           </div>
@@ -465,6 +496,15 @@ async function synchronizeConfiguration() {
         :description="$t('admin.apis.routing.serviceControl.discoverFirstDescription')"
       />
 
+      <UAlert
+        v-if="resource.data.value.connection.lastDiscoveryError"
+        color="warning"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+        :title="$t('admin.apis.routing.serviceControl.lastDiscoveryErrorTitle')"
+        :description="resource.data.value.connection.lastDiscoveryError"
+      />
+
       <!--
         Targets stay reachable before discovery succeeds: discovery itself needs
         at least one enabled Target, so gating this card would strand the Upstream.
@@ -502,7 +542,7 @@ async function synchronizeConfiguration() {
               <p class="truncate font-mono text-sm text-highlighted">
                 {{ target.baseUrl }}
               </p>
-              <p v-if="target.lastError" class="mt-1 text-xs text-error">
+              <p v-if="target.lastError" class="mt-1 break-all text-xs text-error">
                 {{ target.lastError }}
               </p>
             </div>
@@ -535,6 +575,7 @@ async function synchronizeConfiguration() {
                   color="neutral"
                   variant="ghost"
                   size="xs"
+                  :aria-label="$t('common.actions.more')"
                 />
               </UDropdownMenu>
             </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 import type { PlatformApiVersion, PlatformProduct } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
@@ -16,11 +17,15 @@ const confirm = useConfirmDialog()
 
 useHead({ title: () => t('admin.apis.routing.sections.productsTitle') })
 
-const resource = usePrivateResource<PlatformProduct[]>({
-  path: '/api/admin/v1/products',
-  defaultData: () => []
+const resource = usePrivatePagedList<Record<string, never>, PlatformProduct>({
+  path: '/api/admin/v1/products/paged',
+  defaultFilters: {},
+  defaultPageSize: PAGE_SIZE_OPTIONS[0]
 })
-const products = computed(() => resource.data.value)
+const products = computed(() => resource.items.value)
+const page = resource.page
+const pageSize = resource.pageSize
+const total = resource.total
 
 const columns = computed<TableColumn<PlatformProduct>[]>(() => [
   { id: 'product', header: t('admin.apis.routing.columns.product') },
@@ -115,31 +120,6 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-      <div class="max-w-3xl">
-        <h1 class="text-2xl font-semibold tracking-tight text-highlighted">
-          {{ $t('admin.apis.routing.sections.productsTitle') }}
-        </h1>
-        <p class="mt-2 text-sm leading-6 text-muted">
-          {{ $t('admin.apis.routing.sections.productsDescription') }}
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-refresh-cw"
-          :loading="resource.loading.value"
-          @click="resource.refresh"
-        >
-          {{ $t('common.actions.refresh') }}
-        </UButton>
-        <UButton icon="i-lucide-plus" @click="openCreateProduct">
-          {{ $t('admin.apis.routing.actions.createProduct') }}
-        </UButton>
-      </div>
-    </div>
-
     <UAlert
       v-if="resource.error.value"
       color="error"
@@ -163,13 +143,31 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
     <DashboardTableCard
       :title="$t('admin.apis.routing.sections.productsTitle')"
       :description="$t('admin.apis.routing.sections.productsDescription')"
-      :total="products.length"
+      :total="total"
       icon="i-lucide-package-open"
     >
+      <template #actions>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-refresh-cw"
+          :loading="resource.loading.value"
+          @click="resource.refresh"
+        >
+          {{ $t('common.actions.refresh') }}
+        </UButton>
+        <UButton icon="i-lucide-plus" @click="openCreateProduct">
+          {{ $t('admin.apis.routing.actions.createProduct') }}
+        </UButton>
+      </template>
       <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
         :data="products"
         :columns="columns"
         :loading="resource.loading.value"
+        :total="total"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :fixed="false"
         :empty-title="$t('admin.apis.routing.empty.productsTitle')"
         :empty-description="$t('admin.apis.routing.empty.productsDescription')"
@@ -200,6 +198,9 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
               >
                 {{ version.version }}
               </UBadge>
+              <span class="text-xs text-muted">
+                {{ $t(`admin.apis.routing.versionStates.${version.state}`) }}
+              </span>
             </UDropdownMenu>
           </div>
         </template>
@@ -224,6 +225,7 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
                 color="neutral"
                 variant="ghost"
                 size="sm"
+                :aria-label="$t('common.actions.more')"
               />
             </UDropdownMenu>
           </div>

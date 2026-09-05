@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type {
   PlatformEndpointCatalogItem,
-  PlatformEndpointCatalogService
+  PlatformEndpointCatalogService,
+  PlatformEndpointPublicationPatch
 } from '#shared/types/platform'
 import {
   platformStatusColor,
@@ -16,14 +17,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   discover: [upstreamId: string]
   edit: [item: PlatformEndpointCatalogItem]
-  manual: []
+  manual: [upstreamId: string]
+  remove: [item: PlatformEndpointCatalogItem]
   primary: [
     service: PlatformEndpointCatalogService,
     item: PlatformEndpointCatalogItem
   ]
   update: [
     item: PlatformEndpointCatalogItem,
-    patch: Record<string, unknown>,
+    patch: PlatformEndpointPublicationPatch,
     successKey: string
   ]
 }>()
@@ -63,6 +65,7 @@ function serviceStateLabel() {
 
 function endpointBusy(item: PlatformEndpointCatalogItem) {
   return props.isBusy(`endpoint:${item.key}`)
+    || props.isBusy('apply:runtime')
 }
 
 function itemMethod(item: PlatformEndpointCatalogItem) {
@@ -229,7 +232,10 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
               :method="itemMethod(item)"
               size="xs"
             />
-            <code class="truncate text-xs font-semibold text-highlighted">
+            <code
+              class="truncate text-xs font-semibold text-highlighted"
+              :title="sourcePath(item)"
+            >
               {{ sourcePath(item) }}
             </code>
           </div>
@@ -253,7 +259,10 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
               class="size-4 shrink-0"
               :class="item.status === 'live' ? 'text-success' : 'text-muted'"
             />
-            <code class="min-w-0 flex-1 truncate text-xs font-semibold text-highlighted">
+            <code
+              class="min-w-0 flex-1 truncate text-xs font-semibold text-highlighted"
+              :title="publicPath(item)"
+            >
               {{ publicPath(item) }}
             </code>
             <UBadge
@@ -274,6 +283,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
               variant="soft"
               icon="i-lucide-chart-no-axes-column"
               :disabled="item.route.route.creditsCost > 0 || endpointBusy(item)"
+              :aria-label="$t('admin.apis.routing.catalog.actions.statistics')"
               @click="toggleStatistics(item)"
             >
               {{ $t('admin.apis.routing.catalog.actions.statistics') }}
@@ -286,7 +296,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
               :disabled="item.route.route.creditsCost > 0 || endpointBusy(item)"
               @click="toggleApiKey(item)"
             >
-              API Key
+              {{ $t('admin.apis.routing.catalog.actions.apiKey') }}
             </UButton>
             <UBadge
               v-if="item.route.route.creditsCost > 0"
@@ -302,6 +312,22 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
         </div>
 
         <div class="flex items-center justify-end gap-1.5">
+          <UTooltip
+            v-if="item.route?.route.managedBy === 'manual'"
+            :text="item.status === 'disabled'
+              ? $t('admin.apis.routing.catalog.actions.deleteRoute')
+              : $t('admin.apis.routing.catalog.actions.deleteRouteUnavailable')"
+          >
+            <UButton
+              color="error"
+              variant="ghost"
+              size="sm"
+              icon="i-lucide-trash-2"
+              :disabled="item.status !== 'disabled' || endpointBusy(item)"
+              :aria-label="$t('admin.apis.routing.catalog.actions.deleteRoute')"
+              @click="emit('remove', item)"
+            />
+          </UTooltip>
           <UButton
             color="neutral"
             variant="ghost"
@@ -350,7 +376,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
             v-else
             size="sm"
             icon="i-lucide-plus"
-            @click="emit('manual')"
+            @click="emit('manual', service.upstream.id)"
           >
             {{ $t('admin.apis.routing.catalog.actions.manualRoute') }}
           </UButton>

@@ -6,12 +6,14 @@ const { t } = useI18n()
 const {
   catalog,
   applyChanges,
+  applyChangeCount,
   clearFocusedService,
   canApply,
   discoverAllServices,
   discoverService,
   driftedServices,
   editingRoute,
+  createRouteUpstreamId,
   focusedUpstreamId,
   requiresDiscovery,
   handlePrimaryAction,
@@ -20,6 +22,7 @@ const {
   loading,
   openCreateRoute,
   openEditRoute,
+  removeRoute,
   products,
   refresh,
   resetFilters,
@@ -52,23 +55,24 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
           v-if="canApply"
           icon="i-lucide-cloud-upload"
           :loading="isBusy('apply:runtime')"
+          :disabled="isBusy('discover:all')"
           @click="applyChanges"
         >
-          {{ $t('admin.apis.routing.catalog.actions.applyAllChanges', { count: catalog.totals.pending }) }}
+          {{ $t('admin.apis.routing.catalog.actions.applyAllChanges', { count: applyChangeCount }) }}
         </UButton>
         <UButton
           color="neutral"
           variant="outline"
           icon="i-lucide-plus"
-          :disabled="products.length === 0 || upstreams.length === 0"
-          @click="openCreateRoute"
+          :disabled="products.length === 0 || upstreams.length === 0 || isBusy('apply:runtime')"
+          @click="openCreateRoute()"
         >
           {{ $t('admin.apis.routing.catalog.actions.manualRoute') }}
         </UButton>
         <UButton
           icon="i-lucide-scan-search"
           :loading="isBusy('discover:all')"
-          :disabled="serviceUpstreams.length === 0"
+          :disabled="serviceUpstreams.length === 0 || isBusy('apply:runtime')"
           @click="discoverAllServices"
         >
           {{ $t('admin.apis.routing.catalog.actions.syncServices') }}
@@ -121,7 +125,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
             <span
               v-for="item in service.targetDrift"
               :key="item.targetId"
-              class="ms-2 block font-mono text-muted"
+              class="ms-2 block break-all font-mono text-muted"
             >
               <template v-if="item.kind === 'address_changed'">
                 {{ $t('admin.apis.routing.catalog.drift.addressChanged', {
@@ -251,6 +255,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
         @edit="openEditRoute"
         @manual="openCreateRoute"
         @primary="handlePrimaryAction"
+        @remove="removeRoute"
         @update="updatePublication"
       />
     </div>
@@ -289,6 +294,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
       :products="products"
       :upstreams="upstreams"
       :route-binding="editingRoute"
+      :initial-upstream-id="createRouteUpstreamId"
       @saved="refresh"
     />
   </div>
