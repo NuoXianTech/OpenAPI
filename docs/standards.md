@@ -115,6 +115,10 @@ VueUse 组合式函数优先选择 SSR 友好的用法；涉及浏览器 API 的
 
 ### 质量门禁
 
+ESLint 保留 JS/TS/Vue 正确性检查，不强制缩进、逗号和每行属性数量等格式规则。`pnpm lint` 要求零 error、零 warning，开发环境和 CI 使用同一配置。
+
+`server/**/*.ts` 和 `shared/**/*.ts` 额外启用基于类型信息的异步检查：禁止遗漏 Promise 或 Drizzle thenable 查询的处理、向同步回调传入异步函数，以及等待非 thenable 值。需要脱离当前请求执行的任务必须明确处理失败；`void` 只表示主动忽略返回值，不会捕获异常。
+
 常规变更运行：
 
 ```bash

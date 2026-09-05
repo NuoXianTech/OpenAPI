@@ -13,7 +13,7 @@
     "start": "node .output/server/index.mjs",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "check:dead-code": "knip",
     "test": "vitest",
@@ -54,6 +54,7 @@
     "eslint": "^10.8.0",
     "knip": "6.32.2",
     "typescript": "^6.0.3",
+    "typescript-eslint": "8.66.0",
     "vitest": "^4.1.10",
     "vue-tsc": "^3.3.9"
   },
