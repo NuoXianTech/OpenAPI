@@ -47,7 +47,7 @@ Git Tag 必须：
 2. 审查数据库 Schema 和迁移；SQL、snapshot 与 journal 必须全部由 `pnpm db:generate --name descriptive_name` 生成，禁止手工编辑。审查不通过时回到 Schema 修正并重新生成。当前破坏性重建的唯一 `0000` 要求目标环境重建数据库；新基线再次正式发布后，生成产物立即冻结，新 Schema 只能追加迁移。
 3. 为 PostgreSQL 或 PGlite 创建可恢复备份。
 4. 核对运行时变量、密钥和 Service Token 维护计划；Service Token 更新通过待验证版本切换。
-5. 确认 `openapi-service` 当前主线声明 Platform 支持的 `serviceProtocol`（当前为 `openapi-service/v1`），并完成集成测试。Platform 工作流使用 Service `main` 作为当前测试基线，不根据 Platform 版本推导或绑定 Service 版本。
+5. 确认 `openapi-service` 当前主线声明 Platform 支持的 `serviceProtocol`（当前为 `openapi-service/v1`），并完成集成测试。日常 Platform 工作流使用 Service `main`；跨版本兼容性由两个仓库的 `compatibility` 工作流按周或手动运行，并在发布前按需触发。两边不根据对方软件版本推导或建立绑定关系。
 6. 完成质量门禁：
 
    ```bash

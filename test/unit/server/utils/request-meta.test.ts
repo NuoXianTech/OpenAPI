@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   normalizeClientIp,
   readClientIp,
+  resolvePublicRequestProtocol,
   toClientIpRateLimitValue
 } from '~~/server/utils/request-meta'
 
@@ -44,5 +45,23 @@ describe('request IP metadata', () => {
   it('keeps unknown clients in a shared non-persistent rate-limit bucket', () => {
     expect(toClientIpRateLimitValue(null)).toBe('unknown')
     expect(toClientIpRateLimitValue('127.0.0.1')).toBe('127.0.0.1')
+  })
+
+  it('accepts a forwarded protocol only after the direct proxy is trusted', () => {
+    expect(resolvePublicRequestProtocol({
+      directProtocol: 'http',
+      forwardedProtocol: 'https',
+      trustForwarded: true
+    })).toBe('https')
+    expect(resolvePublicRequestProtocol({
+      directProtocol: 'http',
+      forwardedProtocol: 'https',
+      trustForwarded: false
+    })).toBe('http')
+    expect(resolvePublicRequestProtocol({
+      directProtocol: 'https',
+      forwardedProtocol: 'javascript',
+      trustForwarded: true
+    })).toBe('https')
   })
 })

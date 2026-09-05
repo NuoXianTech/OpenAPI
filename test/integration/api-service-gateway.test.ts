@@ -461,10 +461,14 @@ describe('Platform to Node API Service acceptance', () => {
       }
     })
 
+    let failed: Awaited<ReturnType<
+      typeof platformServiceControlService.synchronizeConfiguration
+    >>
     try {
-      await expect(platformServiceControlService.synchronizeConfiguration(
+      failed = await platformServiceControlService.synchronizeConfiguration(
         officialUpstreamId
-      )).resolves.toMatchObject({
+      )
+      expect(failed).toMatchObject({
         status: 'failed',
         revision: 1,
         // A failed sync must not publish a new runtime snapshot.
@@ -478,11 +482,12 @@ describe('Platform to Node API Service acceptance', () => {
       updateSpy.mockRestore()
     }
 
-    await expect(platformServiceControlService.synchronizeConfiguration(
+    const recovered = await platformServiceControlService.synchronizeConfiguration(
       officialUpstreamId
-    )).resolves.toMatchObject({
+    )
+    expect(recovered).toMatchObject({
       status: 'synced',
-      revision: 1,
+      revision: (failed.targets[0]!.configurationRevision ?? 0) + 1,
       targets: [{ configurationStatus: 'synced' }]
     })
   })
@@ -755,14 +760,13 @@ describe('Platform to Node API Service acceptance', () => {
 
   it('does not let an older configuration sync overwrite newer target state', async () => {
     const current = await platformServiceControlService.get(officialUpstreamId)
-    const firstRevision = current.connection.configurationRevision + 1
     const updateConfiguration
       = serviceControlClient.updateConfiguration.bind(serviceControlClient)
     let release!: () => void
     const blocked = new Promise<void>((resolve) => {
       release = resolve
     })
-    let firstAcknowledged = false
+    let firstAcknowledgedRevision: number | null = null
     const updateSpy = vi.spyOn(
       serviceControlClient,
       'updateConfiguration'
@@ -773,8 +777,8 @@ describe('Platform to Node API Service acceptance', () => {
         token,
         input
       )
-      if (input.revision === firstRevision) {
-        firstAcknowledged = true
+      if (firstAcknowledgedRevision === null) {
+        firstAcknowledgedRevision = input.revision
         await blocked
       }
       return response
@@ -789,11 +793,11 @@ describe('Platform to Node API Service acceptance', () => {
           secrets: {}
         }
       )
-      await vi.waitFor(() => expect(firstAcknowledged).toBe(true))
+      await vi.waitFor(() => expect(firstAcknowledgedRevision).not.toBeNull())
       const second = await platformServiceControlService.updateConfiguration(
         officialUpstreamId,
         {
-          expectedRevision: firstRevision,
+          expectedRevision: firstAcknowledgedRevision!,
           values: { 'ip.enabled': true },
           secrets: {}
         }
@@ -803,17 +807,19 @@ describe('Platform to Node API Service acceptance', () => {
 
       expect(second).toMatchObject({
         status: 'synced',
-        revision: firstRevision + 1,
+        revision: firstAcknowledgedRevision! + 1,
         targets: [{
-          configurationRevision: firstRevision + 1,
+          configurationRevision: firstAcknowledgedRevision! + 1,
           configurationStatus: 'synced'
         }]
       })
       await expect(platformServiceControlService.get(officialUpstreamId))
         .resolves.toMatchObject({
-          connection: { configurationRevision: firstRevision + 1 },
+          connection: {
+            configurationRevision: firstAcknowledgedRevision! + 1
+          },
           targets: [{
-            configurationRevision: firstRevision + 1,
+            configurationRevision: firstAcknowledgedRevision! + 1,
             configurationStatus: 'synced'
           }]
         })
@@ -1608,6 +1614,36 @@ describe('Platform to Node API Service acceptance', () => {
       error_code: 'INSUFFICIENT_CREDITS',
       is_counted: false
     })
+  })
+
+  it('allocates configuration above a discovered Service revision', async () => {
+    const official = await platformServiceControlService.get(officialUpstreamId)
+    await platformServiceControlService.updateConfiguration(
+      officialUpstreamId,
+      {
+        expectedRevision: official.connection.configurationRevision,
+        values: { 'ip.enabled': true },
+        secrets: {}
+      }
+    )
+    const upstream = await platformUpstreamService.create({
+      slug: 'ahead-configuration-service',
+      name: 'Ahead Configuration Service',
+      serviceToken,
+      loadBalancing: 'round_robin',
+      targets: [{ baseUrl: serviceBaseURL, weight: 1 }]
+    })
+    const discovered = await platformServiceControlService.discover(upstream.id)
+    const targetRevision = discovered.targets[0]!.configurationRevision ?? 0
+
+    expect(discovered.connection.configurationRevision).toBe(0)
+    expect(targetRevision).toBeGreaterThan(0)
+    const updated = await platformServiceControlService.updateConfiguration(
+      upstream.id,
+      { expectedRevision: 0, values: {}, secrets: {} }
+    )
+    expect(updated.revision).toBe(targetRevision + 1)
+    expect(updated.status).toBe('synced')
   })
 })
 

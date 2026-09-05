@@ -131,6 +131,8 @@ describe('Service control client', () => {
       name: 'ServiceControlRequestError',
       status: 409,
       endpoint: '/.well-known/configuration.json',
+      code: 'CONFIGURATION_REVISION_CONFLICT',
+      responseData: { currentRevision: 7 },
       message: expect.stringContaining(
         '[CONFIGURATION_REVISION_CONFLICT] 服务配置版本冲突'
       )

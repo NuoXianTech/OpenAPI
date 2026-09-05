@@ -17,8 +17,12 @@ import {
   safeServiceControlError,
   type PlatformServiceControlContext
 } from '~~/server/services/platform-service-control-context'
-import { persistServiceOpenApi } from '~~/server/services/platform-service-openapi-service'
+import {
+  persistServiceOpenApi,
+  readStoredServiceEndpoints
+} from '~~/server/services/platform-service-openapi-service'
 import { applyPlatformRevision } from '~~/server/services/platform-endpoint-publication-service'
+import { synchronizeEndpointSupportRoutes } from '~~/server/services/platform-endpoint-support-route-service'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { firstRow } from '~~/server/utils/row'
@@ -92,50 +96,62 @@ async function allSettledBounded<TItem, TResult>(
   return results
 }
 
-function sameDescriptionContract(
-  left: ServiceDescription,
-  right: ServiceDescription
-): boolean {
-  return left.serviceId === right.serviceId
-    && left.name === right.name
-    && left.serviceProtocol === right.serviceProtocol
-    && left.openapiSha256 === right.openapiSha256
-    && left.configuration.schemaSha256 === right.configuration.schemaSha256
-    && left.openapi === right.openapi
-    && left.configuration.schema === right.configuration.schema
-    && left.configuration.state === right.configuration.state
-    && left.configuration.update === right.configuration.update
-    && left.health === right.health
-    && left.readiness === right.readiness
+function descriptionContractFingerprint(description: ServiceDescription): string {
+  return createHash('sha256')
+    .update(canonicalJson({
+      serviceId: description.serviceId,
+      name: description.name,
+      serviceProtocol: description.serviceProtocol,
+      openapiSha256: description.openapiSha256,
+      configurationSchemaSha256: description.configuration.schemaSha256,
+      openapi: description.openapi,
+      configurationSchema: description.configuration.schema,
+      configurationState: description.configuration.state,
+      configurationUpdate: description.configuration.update,
+      health: description.health,
+      readiness: description.readiness
+    }))
+    .digest('hex')
 }
 
-function selectCompatibleTargets(
-  targets: DiscoveredTarget[],
-  targetErrors: Map<string, string>
-): { description: ServiceDescription, targets: DiscoveredTarget[] } {
-  const first = targets[0]
-  if (!first) throw new Error('service has no enabled targets')
+export function selectCompatibleTargets<
+  TTarget extends { targetId: string, description: ServiceDescription }
+>(
+  targets: TTarget[],
+  targetErrors: Map<string, string>,
+  currentDescription: ServiceDescription | null
+): { description: ServiceDescription, targets: TTarget[] } {
+  if (targets.length === 0) throw new Error('service has no enabled targets')
 
-  // Partial-discovery policy: use the first successful contract as the
-  // baseline and quarantine only Targets that disagree with it.  This keeps
-  // the successful subset serving while preserving an explicit per-Target error;
-  // the next discovery can promote a recovered/matching Target again.
-  const compatible = targets.filter((item) => {
-    if (sameDescriptionContract(item.description, first.description)) return true
+  const cohorts = new Map<string, TTarget[]>()
+  for (const target of targets) {
+    const fingerprint = descriptionContractFingerprint(target.description)
+    const cohort = cohorts.get(fingerprint) ?? []
+    cohort.push(target)
+    cohorts.set(fingerprint, cohort)
+  }
+
+  const currentFingerprint = currentDescription
+    ? descriptionContractFingerprint(currentDescription)
+    : null
+  const currentCohort = currentFingerprint
+    ? cohorts.get(currentFingerprint)
+    : undefined
+  const selected = currentCohort ?? [...cohorts.entries()]
+    .sort(([leftFingerprint, left], [rightFingerprint, right]) => (
+      right.length - left.length
+      || leftFingerprint.localeCompare(rightFingerprint)
+    ))[0]![1]
+  selected.sort((left, right) => left.targetId.localeCompare(right.targetId))
+  const selectedIds = new Set(selected.map(target => target.targetId))
+  for (const target of targets) {
+    if (selectedIds.has(target.targetId)) continue
     targetErrors.set(
-      item.targetId,
+      target.targetId,
       'upstream Target exposes a different Service contract'
     )
-    return false
-  })
-  if (compatible.length === 0) {
-    throw createApplicationError({
-      statusCode: 409,
-      message: 'upstream targets do not expose the same Service contract',
-      data: { code: 'SERVICE_TARGET_CONTRACT_MISMATCH' }
-    })
   }
-  return { description: first.description, targets: compatible }
+  return { description: selected[0]!.description, targets: selected }
 }
 
 function discoveryContextFingerprint(
@@ -302,7 +318,11 @@ async function fetchServiceSnapshot(
   }
 
   try {
-    const compatible = selectCompatibleTargets(targets, targetErrors)
+    const compatible = selectCompatibleTargets(
+      targets,
+      targetErrors,
+      context.connection.serviceDescription
+    )
     const description = compatible.description
     if (
       context.connection.serviceId
@@ -383,12 +403,18 @@ async function commitServiceSnapshot(
       && current.connection.configurationSchemaSha256
       !== snapshot.description.configuration.schemaSha256
     )
-    await persistServiceOpenApi({
+    const document = await persistServiceOpenApi({
       upstreamServiceId: current.service.id,
       description: snapshot.description,
       document: snapshot.openapi.document,
       reportedSha256: snapshot.openapi.reportedSha256,
       sourceUrl: snapshot.openapi.sourceUrl,
+      transaction: tx
+    })
+    await synchronizeEndpointSupportRoutes({
+      upstream: current.service,
+      serviceName: snapshot.description.name,
+      endpoints: readStoredServiceEndpoints(document.parsedSummary),
       transaction: tx
     })
 

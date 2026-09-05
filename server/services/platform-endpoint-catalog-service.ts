@@ -326,9 +326,7 @@ export const platformEndpointCatalogService = {
         await synchronizeEndpointSupportRoutes({
           upstream: upstreamView,
           serviceName: view.connection.serviceName ?? upstream.name,
-          endpoint,
           endpoints: view.endpoints,
-          preferredVersionId: route.apiVersionId,
           transaction: tx
         })
         return {
@@ -416,9 +414,7 @@ export const platformEndpointCatalogService = {
           await synchronizeEndpointSupportRoutes({
             upstream: current.upstream,
             serviceName: view.connection.serviceName ?? current.upstream.name,
-            endpoint,
             endpoints: view.endpoints,
-            preferredVersionId: route.apiVersionId,
             transaction: tx
           })
         }

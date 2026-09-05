@@ -169,6 +169,7 @@ Platform 必须删除：
 - Hop-by-hop Header。
 
 Service 只信任 Platform 重新生成的内部 Header。
+Platform 仅在直连代理命中受信 CIDR 且代理客户端信息有效时采用其 `X-Forwarded-Proto`；其他请求使用直连 Socket 协议，调用方不能伪造 Service 用于生成公网链接的协议。
 
 ## 7. 响应语义
 

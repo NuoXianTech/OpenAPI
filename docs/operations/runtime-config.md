@@ -35,7 +35,7 @@
 | `NUXT_REDIS_KEY_PREFIX` | `openapi:` | Redis key 命名空间；同一 Redis 服务部署多个环境时必须区分 |
 | `NUXT_REDIS_CONNECT_TIMEOUT_MS` | `2000` | Redis 首次连接超时毫秒数 |
 | `NUXT_PROXY_SOURCE` | 留空 | 留空时由管理后台配置；可设 `direct`、`cloudflare`、`x_forwarded_for`。一旦设置，环境变量优先并锁定后台对应表单 |
-| `NUXT_PROXY_TRUSTED_CIDRS` | 留空 | 允许提供客户端 IP 请求头的直连代理 IP/CIDR，多个值用逗号分隔；支持 IPv4、IPv6、`0.0.0.0/0` 与 `::/0` |
+| `NUXT_PROXY_TRUSTED_CIDRS` | 留空 | 允许提供客户端 IP 与公网协议转发头的直连代理 IP/CIDR，多个值用逗号分隔；支持 IPv4、IPv6、`0.0.0.0/0` 与 `::/0` |
 | `NUXT_PROXY_FORWARDED_HOPS` | `1` | 从 `X-Forwarded-For` 右侧计算的可信代理层数，最多 10 层 |
 
 生产如果前面有 Nginx、Caddy 或面板反向代理，应设置 `NITRO_HOST=127.0.0.1`，避免 Nitro 直接暴露到公网；容器部署可以使用镜像或 Compose 提供的监听默认值。
@@ -100,7 +100,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET` 使用独立的 32 bytes 随机值；每个 Service-managed Upstream 的 Service Token 也必须单独生成，至少 32 个随机字符，不与前两者复用。每个 Service 实例还必须生成独立的 32-byte `SERVICE_CONFIG_KEY`，并与对应运行快照一起备份。Service Token 只在 Service 部署环境和对应 Platform Upstream 中分别配置。Platform 修改 Token 时先保留待验证版本，发现成功后才提升为活动凭证；验证失败时已发布流量继续使用上一个已验证版本。`NUXT_AUTH_SECRET` 泄露后应在维护窗口轮换，并预期现有登录态、验证链接与 OAuth state 失效。
 
-Service Token 更新会持久化为待验证版本；Platform 先用该版本执行发现，成功后原子提升为活动凭证，失败时保留旧凭证服务已发布流量。需要更换时保持 `SERVICE_CONFIG_KEY` 不变，在 Service 侧启动新 Token 后更新 Platform 并重新发现。配置快照不使用 Token 加密，因此 Token 轮换不会使已有快照失效。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
+Service Token 更新会持久化为待验证版本；Platform 先用该版本执行发现，成功后原子提升为活动凭证，失败时保留旧凭证服务已发布流量。在线更换时保持 `SERVICE_CONFIG_KEY` 不变，在 Service 的 `API_SERVICE_PREVIOUS_TOKEN` 中短暂保留旧值，再把新 Token 写入 Service 与 Platform；提升完成后立即删除旧值。配置快照不使用 Token 加密，因此 Token 轮换不会使已有快照失效。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
 
 API Key 和兑换码没有裸明文数据库列。数据库保存带密钥的 HMAC 摘要、随机 IV 的 AES-256-GCM 密文和掩码预览；API Key 所有者和管理员均可通过各自的专用接口按需查看完整值，每次查看都会写入不含明文的操作日志。普通列表、历史记录、操作日志和积分流水始终只返回预览。
 

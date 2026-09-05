@@ -1,0 +1,100 @@
+name: Platform-Service compatibility
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      service_ref:
+        description: 'Optional Service tag or commit to test instead of the latest release'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compatibility-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: true
+
+jobs:
+  platform-service:
+    name: Platform with latest Service release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out Platform source
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 11.20.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Platform dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Resolve Service compatibility release
+        id: service-release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_REF: ${{ inputs.service_ref }}
+        run: |
+          set -euo pipefail
+          ref="$REQUESTED_REF"
+          if [[ -z "$ref" ]]; then
+            ref="$(gh api repos/NuoXianTech/openapi-service/releases/latest --jq '.tag_name')"
+          fi
+          sha="$(gh api "repos/NuoXianTech/openapi-service/commits/${ref}" --jq '.sha')"
+          printf 'ref=%s\n' "$ref" >> "$GITHUB_OUTPUT"
+          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
+          echo "Testing Service ref ${ref} (${sha})."
+
+      - name: Check out Service compatibility source
+        uses: actions/checkout@v7
+        with:
+          repository: NuoXianTech/openapi-service
+          ref: ${{ steps.service-release.outputs.sha }}
+          path: openapi-service
+          persist-credentials: false
+
+      - name: Install Service dependencies
+        working-directory: openapi-service
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build Service
+        working-directory: openapi-service
+        run: pnpm build
+
+      - name: Run Platform-Service acceptance suite
+        env:
+          OPENAPI_SERVICE_REPO: ${{ github.workspace }}/openapi-service
+        run: pnpm test:api-service
+
+      - name: Publish compatibility summary
+        if: always()
+        shell: bash
+        env:
+          SERVICE_REF: ${{ steps.service-release.outputs.ref }}
+          SERVICE_SHA: ${{ steps.service-release.outputs.sha }}
+        run: |
+          {
+            echo "### Platform-Service compatibility"
+            echo
+            echo "- Platform: `${GITHUB_SHA}`"
+            echo "- Service: `${SERVICE_REF}` (`${SERVICE_SHA}`)"
+          } >> "$GITHUB_STEP_SUMMARY"

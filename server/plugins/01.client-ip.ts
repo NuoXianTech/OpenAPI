@@ -1,8 +1,11 @@
 import type { H3Event } from 'h3'
-import { getHeader, getRequestURL } from 'h3'
+import { getHeader, getRequestProtocol, getRequestURL } from 'h3'
 import { clientIpConfigService } from '~~/server/services/client-ip-config-service'
 import { resolveClientIp } from '~~/server/utils/client-ip'
-import { normalizeClientIp } from '~~/server/utils/request-meta'
+import {
+  normalizeClientIp,
+  resolvePublicRequestProtocol
+} from '~~/server/utils/request-meta'
 
 // 在 00.startup.ts 的数据库初始化门之后注册请求钩子，确保数据库设置可安全读取。
 export default defineNitroPlugin((nitroApp) => {
@@ -22,6 +25,12 @@ export default defineNitroPlugin((nitroApp) => {
       cfConnectingIp: getHeader(event, 'cf-connecting-ip'),
       xForwardedFor: getHeader(event, 'x-forwarded-for'),
       config
+    })
+
+    event.context.publicRequestProtocol = resolvePublicRequestProtocol({
+      directProtocol: getRequestProtocol(event, { xForwardedProto: false }),
+      forwardedProtocol: getHeader(event, 'x-forwarded-proto'),
+      trustForwarded: resolution.reason === 'trusted_proxy'
     })
 
     if (resolution.clientIp) event.context.clientAddress = resolution.clientIp

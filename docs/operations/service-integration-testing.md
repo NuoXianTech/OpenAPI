@@ -159,4 +159,4 @@ pnpm build
 
 测试数量会随功能变化，不应在文档中固定具体文件或用例数量。
 
-GitHub Actions 会把 `openapi-service` 的 `main` 检出到 Platform 工作区并先执行 Service build。Platform 的日常 `main` 和版本 Tag 都验证当前 Service 主线使用受支持的通信协议并通过真实链路；两者不要求使用相同版本号，也不建立发布绑定关系。业务 `/v1`、`/v2` 路径由 OpenAPI 发现，和控制协议版本分别验证。
+GitHub Actions 的日常质量工作流只检出 `openapi-service` 的 `main`，以保持 PR 反馈速度。两个仓库各自的 `compatibility` 工作流按周或手动解析对方最新正式 Release，并运行同一套真实链路测试；发布前可手动触发该工作流。两者不要求使用相同版本号，也不建立发布绑定关系。业务 `/v1`、`/v2` 路径由 OpenAPI 发现，和控制协议版本分别验证。

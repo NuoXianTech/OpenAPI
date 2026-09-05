@@ -12,6 +12,7 @@ import { userService, USER_ROLES } from '~~/server/services/user-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { hashPassword } from '~~/server/utils/password'
 import { closeRedis, initializeRedis } from '~~/server/utils/redis'
+import { closeSafeFetchTransports } from '~~/server/utils/safe-fetch'
 
 async function migrateDatabase(): Promise<void> {
   if (process.env.DB_AUTO_MIGRATE === 'false') {
@@ -73,7 +74,8 @@ async function initializeServer(): Promise<void> {
 async function closeServer(): Promise<void> {
   await Promise.all([
     closeRedis(),
-    closeDatabase()
+    closeDatabase(),
+    closeSafeFetchTransports()
   ])
 }
 

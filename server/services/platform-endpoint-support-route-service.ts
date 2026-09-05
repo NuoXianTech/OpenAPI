@@ -35,46 +35,49 @@ function endpointBelongsToProduct(input: {
 export async function synchronizeEndpointSupportRoutes(input: {
   upstream: Pick<UpstreamView, 'id' | 'slug'>
   serviceName: string
-  endpoint: ServiceEndpointSummary
   endpoints: ServiceEndpointSummary[]
-  preferredVersionId?: string
   transaction?: DatabaseTransaction
 }) {
-  const productSlug = endpointProductDefinition(input).slug
-  const versionName = endpointDefaultVersion(input.endpoint.path)
-  const groupedEndpoints = input.endpoints.filter(endpoint => (
-    !endpoint.system
-    && endpointDefaultVersion(endpoint.path) === versionName
-    && endpointBelongsToProduct({
-      upstream: input.upstream,
-      serviceName: input.serviceName,
-      endpoint,
-      productSlug
-    })
-  ))
-  const supportEndpoints = groupedEndpoints.filter(endpoint => endpoint.support)
-  if (supportEndpoints.length === 0) return
-
   const routes = (await platformRouteService.list({
     transaction: input.transaction
   })).filter(
     binding => binding.route.upstreamServiceId === input.upstream.id
   )
-  const publicEndpoints = groupedEndpoints.filter(endpoint => !endpoint.support)
+  const endpoints = input.endpoints.filter(endpoint => !endpoint.system)
+  const publicEndpoints = endpoints.filter(endpoint => !endpoint.support)
+  const supportEndpoints = endpoints.filter(endpoint => endpoint.support)
   const activePublicRoutes = routes.filter(binding => (
-    binding.route.state === 'active'
+    !binding.route.isSupportRoute
+    && binding.route.state === 'active'
     && publicEndpoints.some(endpoint => routeMatchesEndpoint(binding, endpoint))
   ))
-  const supportEnabled = activePublicRoutes.length > 0
-  const supportHosts = supportRouteHosts(activePublicRoutes)
-  const versionId = input.preferredVersionId
-    ?? activePublicRoutes[0]?.route.apiVersionId
+  const handledSupportRouteIds = new Set<string>()
 
   for (const endpoint of supportEndpoints) {
-    const candidates = routes.filter(binding => (
-      routeMatchesEndpoint(binding, endpoint)
+    const productSlug = endpointProductDefinition({
+      upstream: input.upstream,
+      serviceName: input.serviceName,
+      endpoint
+    }).slug
+    const versionName = endpointDefaultVersion(endpoint.path)
+    const groupedPublicRoutes = activePublicRoutes.filter(binding => (
+      binding.product.slug === productSlug
+      && binding.version.version === versionName
     ))
-    if (!supportEnabled) {
+    const candidates = routes.filter(binding => (
+      binding.route.isSupportRoute
+      && endpointBelongsToProduct({
+        upstream: input.upstream,
+        serviceName: input.serviceName,
+        endpoint,
+        productSlug: binding.product.slug
+      })
+      && routeMatchesEndpoint(binding, endpoint)
+    ))
+    for (const candidate of candidates) {
+      handledSupportRouteIds.add(candidate.route.id)
+    }
+    if (groupedPublicRoutes.length === 0) {
       await Promise.all(candidates
         .filter(binding => binding.route.state !== 'disabled')
         .map(binding => platformRouteService.update(
@@ -97,9 +100,8 @@ export async function synchronizeEndpointSupportRoutes(input: {
       continue
     }
 
-    if (!versionId) {
-      throw new Error('support route requires an active endpoint version')
-    }
+    const versionId = groupedPublicRoutes[0]!.route.apiVersionId
+    const supportHosts = supportRouteHosts(groupedPublicRoutes)
     const selected = candidates.find(binding => (
       binding.route.apiVersionId === versionId
     ))
@@ -146,7 +148,7 @@ export async function synchronizeEndpointSupportRoutes(input: {
       )
       continue
     }
-    await platformRouteService.create({
+    const created = await platformRouteService.create({
       apiVersionId: versionId,
       name,
       hosts: supportHosts,
@@ -170,5 +172,21 @@ export async function synchronizeEndpointSupportRoutes(input: {
       isSupportRoute: true,
       transaction: input.transaction
     })
+    if (created) handledSupportRouteIds.add(created.id)
   }
+
+  await Promise.all(routes
+    .filter(binding => (
+      binding.route.isSupportRoute
+      && !handledSupportRouteIds.has(binding.route.id)
+      && binding.route.state !== 'disabled'
+    ))
+    .map(binding => platformRouteService.update(
+      binding.route.id,
+      routeMutationFromBinding(binding, { state: 'disabled' }),
+      {
+        allowServiceManaged: true,
+        transaction: input.transaction
+      }
+    )))
 }

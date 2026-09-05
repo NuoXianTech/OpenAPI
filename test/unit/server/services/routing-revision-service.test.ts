@@ -43,6 +43,7 @@ vi.stubGlobal('useRuntimeConfig', () => ({
 const { platformProductService } = await import('~~/server/services/platform-product-service')
 const { apiCatalogService } = await import('~~/server/services/api-catalog-service')
 const { platformEndpointCatalogService } = await import('~~/server/services/platform-endpoint-catalog-service')
+const { synchronizeEndpointSupportRoutes } = await import('~~/server/services/platform-endpoint-support-route-service')
 const { applyPlatformRevision } = await import('~~/server/services/platform-endpoint-publication-service')
 const { platformRouteService } = await import('~~/server/services/platform-route-service')
 const { platformUpstreamService } = await import('~~/server/services/platform-upstream-service')
@@ -945,6 +946,61 @@ describe('routing revision service', () => {
     expect(routes.find(binding => (
       binding.route.pathPattern === '/v1/player/assets/{asset}'
     ))?.route.state).toBe('disabled')
+  })
+
+  it('reconciles added and removed support routes from the discovered contract', async () => {
+    const publicEndpoint: ServiceEndpointSummary = {
+      method: 'GET',
+      path: '/v1/viewer',
+      operationId: 'getViewer',
+      summary: 'Viewer',
+      tags: ['Viewer'],
+      system: false,
+      support: false
+    }
+    const supportEndpoint: ServiceEndpointSummary = {
+      method: 'GET',
+      path: '/v1/viewer/assets/{asset}',
+      operationId: 'getViewerAsset',
+      summary: 'Viewer asset',
+      tags: ['Viewer'],
+      system: false,
+      support: true
+    }
+    const service = await createDiscoveredService({
+      slug: 'viewer-catalog-service',
+      endpoints: [publicEndpoint, supportEndpoint]
+    })
+    await platformEndpointCatalogService.publish({
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: publicEndpoint.path
+    }, null)
+
+    await synchronizeEndpointSupportRoutes({
+      upstream: service.upstream,
+      serviceName: 'Viewer Catalog Service',
+      endpoints: [publicEndpoint]
+    })
+    let supportRoute = (await platformRouteService.list()).find(binding => (
+      binding.route.upstreamServiceId === service.upstream.id
+      && binding.route.isSupportRoute
+    ))
+    expect(supportRoute?.route.state).toBe('disabled')
+
+    await synchronizeEndpointSupportRoutes({
+      upstream: service.upstream,
+      serviceName: 'Viewer Catalog Service',
+      endpoints: [publicEndpoint, supportEndpoint]
+    })
+    supportRoute = (await platformRouteService.list()).find(binding => (
+      binding.route.upstreamServiceId === service.upstream.id
+      && binding.route.isSupportRoute
+    ))
+    expect(supportRoute?.route).toMatchObject({
+      pathPattern: supportEndpoint.path,
+      state: 'active'
+    })
   })
 
   it('keeps support routes inside their path version', async () => {

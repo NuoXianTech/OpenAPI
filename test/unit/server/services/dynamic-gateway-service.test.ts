@@ -168,6 +168,15 @@ describe('dynamic gateway streaming billing', () => {
     expect(headers.get('x-business-header')).toBe('keep-me')
   })
 
+  it('forwards the public protocol resolved by the trusted proxy boundary', () => {
+    const event = createEvent()
+    event.context.publicRequestProtocol = 'https'
+
+    const headers = createUpstreamHeaders(event, match, 'service-token')
+
+    expect(headers.get('x-forwarded-proto')).toBe('https')
+  })
+
   it('does not settle a paid call before the streamed response completes', async () => {
     const event = createEvent()
     let finishProxy: (() => Promise<void>) | null = null

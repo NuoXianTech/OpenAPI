@@ -21,7 +21,10 @@ import {
   serviceTargetControlState
 } from '~~/server/services/platform-service-control-context'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
-import { serviceControlClient } from '~~/server/utils/service-control-client'
+import {
+  ServiceControlRequestError,
+  serviceControlClient
+} from '~~/server/utils/service-control-client'
 import {
   calculateServiceConfigurationHash,
   defaultServiceConfigurationValues,
@@ -37,6 +40,80 @@ import { firstRow } from '~~/server/utils/row'
 import { applyPlatformRevision } from '~~/server/services/platform-endpoint-publication-service'
 
 const CONFIGURATION_SYNC_CONCURRENCY = 8
+const MAX_CONFIGURATION_REVISION = 2_147_483_647
+
+interface ConfigurationRevisionTarget {
+  enabled: boolean
+  configurationRevision: number | null
+  configurationHash: string | null
+}
+
+class ServiceConfigurationRevisionAheadError extends Error {
+  constructor(readonly currentRevision: number) {
+    super(`Service Target configuration revision is already ${currentRevision}`)
+    this.name = 'ServiceConfigurationRevisionAheadError'
+  }
+}
+
+function serviceConflictRevision(error: unknown): number | null {
+  if (
+    !(error instanceof ServiceControlRequestError)
+    || error.status !== 409
+    || error.code !== 'CONFIGURATION_REVISION_CONFLICT'
+  ) return null
+
+  const rawRevision = error.responseData?.currentRevision
+  const revision = typeof rawRevision === 'number' ? rawRevision : Number.NaN
+  return Number.isSafeInteger(revision) && revision >= 0
+    ? revision
+    : null
+}
+
+function incrementConfigurationRevision(revision: number): number {
+  if (revision >= MAX_CONFIGURATION_REVISION) {
+    throw createApplicationError({
+      statusCode: 409,
+      message: 'Service configuration revision is exhausted',
+      data: { code: 'SERVICE_CONFIGURATION_REVISION_EXHAUSTED' }
+    })
+  }
+  return revision + 1
+}
+
+export function nextServiceConfigurationRevision(
+  currentRevision: number,
+  targets: readonly ConfigurationRevisionTarget[]
+): number {
+  const highestRevision = targets
+    .filter(target => target.enabled)
+    .reduce(
+      (highest, target) => Math.max(
+        highest,
+        target.configurationRevision ?? 0
+      ),
+      currentRevision
+    )
+  return incrementConfigurationRevision(highestRevision)
+}
+
+export function serviceConfigurationSynchronizationRevision(
+  currentRevision: number,
+  configurationHash: string,
+  targets: readonly ConfigurationRevisionTarget[]
+): number {
+  const enabledTargets = targets.filter(target => target.enabled)
+  const mustAdvance = enabledTargets.some(target => (
+    (target.configurationRevision ?? 0) > currentRevision
+    || (
+      target.configurationRevision === currentRevision
+      && target.configurationHash !== null
+      && target.configurationHash !== configurationHash
+    )
+  ))
+  return mustAdvance
+    ? nextServiceConfigurationRevision(currentRevision, enabledTargets)
+    : currentRevision
+}
 
 async function mapBounded<TItem, TResult>(
   items: readonly TItem[],
@@ -93,7 +170,8 @@ async function pushConfiguration(
   context: PlatformServiceControlContext,
   revision: number,
   values: Record<string, ServiceConfigurationValue>,
-  configurationHash: string
+  configurationHash: string,
+  recoverRevisionConflict: boolean
 ): Promise<ServiceConfigurationSyncResult> {
   const definition = context.connection.configurationSchema
   const description = context.connection.serviceDescription
@@ -150,10 +228,26 @@ async function pushConfiguration(
         ok: false as const,
         targetId: target.id,
         matches: false as const,
+        conflictingRevision: serviceConflictRevision(error),
         error: safeServiceControlError(error)
       }
     }
   }, CONFIGURATION_SYNC_CONCURRENCY)
+
+  const conflictingRevision = results.reduce<number | null>(
+    (highest, result) => {
+      if (result.ok || result.conflictingRevision === null) return highest
+      return Math.max(highest ?? 0, result.conflictingRevision)
+    },
+    null
+  )
+  if (
+    recoverRevisionConflict
+    && conflictingRevision !== null
+    && conflictingRevision >= revision
+  ) {
+    throw new ServiceConfigurationRevisionAheadError(conflictingRevision)
+  }
 
   const successful = results.filter(result => result.ok && result.matches).length
   const status = successful === enabledTargets.length
@@ -310,6 +404,92 @@ function storeConfigurationValues(
   return stored
 }
 
+async function advanceStoredConfigurationRevision(input: {
+  context: PlatformServiceControlContext
+  revision: number
+  configurationHash: string
+  schemaSha256: string
+}): Promise<PlatformServiceControlContext> {
+  const updated = await db.transaction(async (tx) => {
+    const now = new Date()
+    const connection = firstRow(await tx.update(upstreamServiceConnections)
+      .set({ configurationRevision: input.revision, updatedAt: now })
+      .where(and(
+        eq(
+          upstreamServiceConnections.upstreamServiceId,
+          input.context.service.id
+        ),
+        eq(
+          upstreamServiceConnections.configurationRevision,
+          input.context.connection.configurationRevision
+        ),
+        eq(
+          upstreamServiceConnections.configurationSchemaSha256,
+          input.schemaSha256
+        ),
+        eq(
+          upstreamServiceConnections.configurationHash,
+          input.configurationHash
+        )
+      ))
+      .returning())
+    if (!connection) return null
+
+    await tx.update(upstreamTargets).set({
+      configurationStatus: 'unknown',
+      updatedAt: now
+    }).where(and(
+      eq(upstreamTargets.upstreamServiceId, input.context.service.id),
+      eq(upstreamTargets.enabled, true)
+    ))
+    return connection
+  })
+  if (!updated) {
+    throw createApplicationError({
+      statusCode: 409,
+      message: 'Service configuration was changed by another administrator',
+      data: { code: 'SERVICE_CONFIGURATION_REVISION_CONFLICT' }
+    })
+  }
+  return { ...input.context, connection: updated }
+}
+
+async function pushConfigurationWithRevisionRecovery(input: {
+  context: PlatformServiceControlContext
+  revision: number
+  values: Record<string, ServiceConfigurationValue>
+  configurationHash: string
+  schemaSha256: string
+}): Promise<ServiceConfigurationSyncResult> {
+  let context = input.context
+  let revision = input.revision
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await pushConfiguration(
+        context,
+        revision,
+        input.values,
+        input.configurationHash,
+        attempt === 0
+      )
+    } catch (error) {
+      if (!(error instanceof ServiceConfigurationRevisionAheadError)) throw error
+
+      revision = incrementConfigurationRevision(Math.max(
+        revision,
+        error.currentRevision
+      ))
+      context = await advanceStoredConfigurationRevision({
+        context,
+        revision,
+        configurationHash: input.configurationHash,
+        schemaSha256: input.schemaSha256
+      })
+    }
+  }
+  throw new Error('Service configuration revision recovery exhausted')
+}
+
 export async function updatePlatformServiceConfiguration(
   upstreamServiceId: string,
   input: {
@@ -357,7 +537,10 @@ export async function updatePlatformServiceConfiguration(
     }
     throw error
   }
-  const revision = context.connection.configurationRevision + 1
+  const revision = nextServiceConfigurationRevision(
+    context.connection.configurationRevision,
+    context.targets
+  )
   const configurationHash = calculateServiceConfigurationHash(
     schemaSha256,
     values
@@ -404,12 +587,13 @@ export async function updatePlatformServiceConfiguration(
       data: { code: 'SERVICE_CONFIGURATION_REVISION_CONFLICT' }
     })
   }
-  const result = await pushConfiguration(
-    { ...context, connection: updated },
+  const result = await pushConfigurationWithRevisionRecovery({
+    context: { ...context, connection: updated },
     revision,
     values,
-    configurationHash
-  )
+    configurationHash,
+    schemaSha256
+  })
   const publication = await publishRoutableConfigurationTargets(result)
   return { ...result, ...publication }
 }
@@ -449,12 +633,26 @@ export async function synchronizePlatformServiceConfiguration(
       data: { code: 'SERVICE_CONFIGURATION_STORAGE_INVALID' }
     })
   }
-  const result = await pushConfiguration(
-    context,
+  const revision = serviceConfigurationSynchronizationRevision(
     context.connection.configurationRevision,
-    values,
-    configurationHash
+    configurationHash,
+    context.targets
   )
+  const synchronizedContext = revision === context.connection.configurationRevision
+    ? context
+    : await advanceStoredConfigurationRevision({
+        context,
+        revision,
+        configurationHash,
+        schemaSha256
+      })
+  const result = await pushConfigurationWithRevisionRecovery({
+    context: synchronizedContext,
+    revision,
+    values,
+    configurationHash,
+    schemaSha256
+  })
   const publication = await publishRoutableConfigurationTargets(result)
   return { ...result, ...publication }
 }

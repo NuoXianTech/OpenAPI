@@ -28,7 +28,26 @@ const BLOCKED_NETWORKS = [
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308])
 const DNS_LOOKUP_TIMEOUT_MS = 2_000
+const DNS_CACHE_TTL_MS = 5_000
+const DISPATCHER_CACHE_TTL_MS = 30_000
+const MAX_TRANSPORT_CACHE_ENTRIES = 512
 type ResolvedAddress = { address: string, family: number }
+
+interface DnsCacheEntry {
+  addresses: ResolvedAddress[]
+  expiresAt: number
+}
+
+interface DispatcherCacheEntry {
+  dispatcher: Agent
+  pinnedAddresses: Map<string, ResolvedAddress[]>
+  expiresAt: number
+}
+
+const dnsCache = new Map<string, DnsCacheEntry>()
+const pendingDnsLookups = new Map<string, Promise<ResolvedAddress[]>>()
+const dispatcherCache = new Map<string, DispatcherCacheEntry>()
+let transportCacheGeneration = 0
 
 export interface SafeFetchOptions extends RequestInit {
   allowedHosts: readonly string[]
@@ -78,7 +97,18 @@ function assertPublicAddress(address: string): void {
   }
 }
 
-async function lookupAddresses(hostname: string): Promise<ResolvedAddress[]> {
+function pruneDnsCache(now = Date.now()): void {
+  for (const [hostname, entry] of dnsCache) {
+    if (entry.expiresAt <= now) dnsCache.delete(hostname)
+  }
+  while (dnsCache.size > MAX_TRANSPORT_CACHE_ENTRIES) {
+    const oldest = dnsCache.keys().next().value as string | undefined
+    if (!oldest) break
+    dnsCache.delete(oldest)
+  }
+}
+
+async function resolveAddresses(hostname: string): Promise<ResolvedAddress[]> {
   let timer: ReturnType<typeof setTimeout> | null = null
   try {
     return await Promise.race([
@@ -92,6 +122,40 @@ async function lookupAddresses(hostname: string): Promise<ResolvedAddress[]> {
     ])
   } finally {
     if (timer) clearTimeout(timer)
+  }
+}
+
+async function lookupAddresses(hostname: string): Promise<ResolvedAddress[]> {
+  const key = normalizeHostname(hostname)
+  const now = Date.now()
+  const cached = dnsCache.get(key)
+  if (cached && cached.expiresAt > now) {
+    dnsCache.delete(key)
+    dnsCache.set(key, cached)
+    return cached.addresses
+  }
+  if (cached) dnsCache.delete(key)
+
+  const pending = pendingDnsLookups.get(key)
+  if (pending) return pending
+  const generation = transportCacheGeneration
+  const loading = resolveAddresses(key).then((addresses) => {
+    if (generation === transportCacheGeneration) {
+      dnsCache.set(key, {
+        addresses,
+        expiresAt: Date.now() + DNS_CACHE_TTL_MS
+      })
+      pruneDnsCache()
+    }
+    return addresses
+  })
+  pendingDnsLookups.set(key, loading)
+  try {
+    return await loading
+  } finally {
+    if (pendingDnsLookups.get(key) === loading) {
+      pendingDnsLookups.delete(key)
+    }
   }
 }
 
@@ -145,6 +209,88 @@ function createPinnedDispatcher(pinnedAddresses: Map<string, ResolvedAddress[]>)
   return new Agent({ connect: { lookup: pinnedLookup } })
 }
 
+function closeDispatcher(dispatcher: Agent): void {
+  void dispatcher.close().catch(() => undefined)
+}
+
+function pruneDispatcherCache(now = Date.now()): void {
+  for (const [key, entry] of dispatcherCache) {
+    if (entry.expiresAt > now) continue
+    dispatcherCache.delete(key)
+    closeDispatcher(entry.dispatcher)
+  }
+  while (dispatcherCache.size > MAX_TRANSPORT_CACHE_ENTRIES) {
+    const oldest = dispatcherCache.keys().next().value as string | undefined
+    if (!oldest) break
+    const entry = dispatcherCache.get(oldest)
+    dispatcherCache.delete(oldest)
+    if (entry) closeDispatcher(entry.dispatcher)
+  }
+}
+
+function dispatcherCacheKey(
+  url: URL,
+  allowedHosts: readonly string[],
+  options: Pick<
+    SafeFetchOptions,
+    'allowHttp' | 'allowPrivateNetworks' | 'allowNonDefaultPort' | 'allowSubdomains'
+  >
+): string {
+  return JSON.stringify({
+    origin: url.origin,
+    allowedHosts: allowedHosts.map(normalizeHostname).sort(),
+    allowHttp: options.allowHttp === true,
+    allowPrivateNetworks: options.allowPrivateNetworks === true,
+    allowNonDefaultPort: options.allowNonDefaultPort === true,
+    allowSubdomains: options.allowSubdomains !== false
+  })
+}
+
+function acquireCachedDispatcher(
+  key: string,
+  verifiedAddresses: Map<string, ResolvedAddress[]>
+): DispatcherCacheEntry {
+  const now = Date.now()
+  pruneDispatcherCache(now)
+  const cached = dispatcherCache.get(key)
+  if (cached) {
+    for (const [hostname, addresses] of verifiedAddresses) {
+      cached.pinnedAddresses.set(hostname, addresses)
+    }
+    dispatcherCache.delete(key)
+    dispatcherCache.set(key, cached)
+    return cached
+  }
+
+  const pinnedAddresses = new Map(verifiedAddresses)
+  const created = {
+    dispatcher: createPinnedDispatcher(pinnedAddresses),
+    pinnedAddresses,
+    expiresAt: now + DISPATCHER_CACHE_TTL_MS
+  }
+  dispatcherCache.set(key, created)
+  pruneDispatcherCache(now)
+  return created
+}
+
+function evictCachedDispatcher(key: string, dispatcher: Agent): void {
+  const cached = dispatcherCache.get(key)
+  if (cached?.dispatcher !== dispatcher) return
+  dispatcherCache.delete(key)
+  closeDispatcher(dispatcher)
+}
+
+export async function closeSafeFetchTransports(): Promise<void> {
+  transportCacheGeneration += 1
+  dnsCache.clear()
+  pendingDnsLookups.clear()
+  const dispatchers = [...dispatcherCache.values()].map(entry => entry.dispatcher)
+  dispatcherCache.clear()
+  await Promise.all(dispatchers.map(dispatcher => (
+    dispatcher.close().catch(() => undefined)
+  )))
+}
+
 const CREDENTIAL_HEADERS = [
   'authorization',
   'cookie',
@@ -195,7 +341,14 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
   const urlOptions = { allowHttp, allowPrivateNetworks, allowNonDefaultPort, allowSubdomains }
   let currentUrl = await assertSafeUrl(input, allowedHosts, pinnedAddresses, urlOptions)
   let currentOptions: RequestInit = { ...requestOptions, redirect: 'manual' }
-  const dispatcher = createPinnedDispatcher(pinnedAddresses)
+  const cacheKey = followRedirects
+    ? null
+    : dispatcherCacheKey(currentUrl, allowedHosts, urlOptions)
+  const cached = cacheKey
+    ? acquireCachedDispatcher(cacheKey, pinnedAddresses)
+    : null
+  const dispatcher = cached?.dispatcher
+    ?? createPinnedDispatcher(pinnedAddresses)
 
   try {
     for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
@@ -204,13 +357,13 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
         dispatcher
       } as unknown as UndiciRequestInit)
       if (!REDIRECT_STATUS_CODES.has(response.status) || !followRedirects) {
-        void dispatcher.close()
+        if (!cached) closeDispatcher(dispatcher)
         return response as unknown as Response
       }
 
       const location = response.headers.get('location')
       if (!location) {
-        void dispatcher.close()
+        closeDispatcher(dispatcher)
         return response as unknown as Response
       }
       if (redirectCount === maxRedirects) {
@@ -236,7 +389,8 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
 
     throw new Error('upstream redirect limit exceeded')
   } catch (error) {
-    await dispatcher.close()
+    if (cacheKey) evictCachedDispatcher(cacheKey, dispatcher)
+    else await dispatcher.close()
     throw error
   }
 }

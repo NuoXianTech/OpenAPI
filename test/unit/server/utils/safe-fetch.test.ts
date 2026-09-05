@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { isHostnameWithin, readLimitedText, safeFetch } from '../../../../server/utils/safe-fetch'
+import {
+  closeSafeFetchTransports,
+  isHostnameWithin,
+  readLimitedText,
+  safeFetch
+} from '../../../../server/utils/safe-fetch'
 
 type PinnedLookup = (
   hostname: string,
@@ -9,6 +14,7 @@ type PinnedLookup = (
 
 const networkMocks = vi.hoisted(() => ({
   agentOptions: null as { connect?: { lookup?: PinnedLookup } } | null,
+  agentCount: 0,
   lookup: vi.fn()
 }))
 
@@ -17,6 +23,7 @@ vi.mock('undici', () => ({
   Agent: class {
     constructor(options: { connect?: { lookup?: PinnedLookup } }) {
       networkMocks.agentOptions = options
+      networkMocks.agentCount += 1
     }
 
     async close() {}
@@ -24,15 +31,19 @@ vi.mock('undici', () => ({
   fetch: (...args: Parameters<typeof globalThis.fetch>) => globalThis.fetch(...args)
 }))
 
-beforeEach(() => {
+beforeEach(async () => {
+  await closeSafeFetchTransports()
   networkMocks.agentOptions = null
+  networkMocks.agentCount = 0
+  networkMocks.lookup.mockReset()
   networkMocks.lookup.mockImplementation(async (hostname: string) => [{
     address: hostname,
     family: hostname.includes(':') ? 6 : 4
   }])
 })
 
-afterEach(() => {
+afterEach(async () => {
+  await closeSafeFetchTransports()
   vi.restoreAllMocks()
 })
 
@@ -106,6 +117,26 @@ describe('safeFetch', () => {
       allowedHosts: ['example.com']
     })).resolves.toBeInstanceOf(Response)
     expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it('reuses a DNS-pinned dispatcher for a fixed non-redirecting Target', async () => {
+    networkMocks.lookup.mockResolvedValue([{
+      address: '93.184.216.34',
+      family: 4
+    }])
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('ok'))
+    const options = {
+      allowedHosts: ['example.com'],
+      followRedirects: false
+    } as const
+
+    await safeFetch('https://example.com/first', options)
+    await safeFetch('https://example.com/second', options)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(networkMocks.lookup).toHaveBeenCalledOnce()
+    expect(networkMocks.agentCount).toBe(1)
   })
 
   it('allows a public IPv4-mapped IPv6 destination', async () => {

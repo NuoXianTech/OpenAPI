@@ -7,6 +7,20 @@ interface RequestMeta {
   userAgent: string | null
 }
 
+export function resolvePublicRequestProtocol(input: {
+  directProtocol: string
+  forwardedProtocol?: string | null
+  trustForwarded: boolean
+}): 'http' | 'https' {
+  const directProtocol = input.directProtocol === 'https' ? 'https' : 'http'
+  if (!input.trustForwarded) return directProtocol
+
+  const forwardedProtocol = input.forwardedProtocol?.trim().toLowerCase()
+  return forwardedProtocol === 'http' || forwardedProtocol === 'https'
+    ? forwardedProtocol
+    : directProtocol
+}
+
 export function normalizeClientIp(value: string | null | undefined): string | null {
   let normalized = value?.trim()
   if (!normalized) return null

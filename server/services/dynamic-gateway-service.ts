@@ -95,12 +95,9 @@ export function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRout
   const requestUrl = getRequestURL(event)
   const clientIp = readClientIp(event)
   headers.set('x-request-id', ensureRequestId(event))
-  headers.set('x-forwarded-proto', getRequestProtocol(event, {
-    // The incoming forwarding header is untrusted at this boundary. A
-    // trusted reverse-proxy deployment can normalize the connection before
-    // it reaches the Platform; callers must not be able to forge this value.
-    xForwardedProto: false
-  }))
+  const publicProtocol = getAppEventContext(event).publicRequestProtocol
+    ?? getRequestProtocol(event, { xForwardedProto: false })
+  headers.set('x-forwarded-proto', publicProtocol)
   headers.set('x-forwarded-host', requestUrl.host)
   if (clientIp) headers.set('x-forwarded-for', clientIp)
   else headers.delete('x-forwarded-for')

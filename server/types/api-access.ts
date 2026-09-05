@@ -88,4 +88,5 @@ export interface AppEventContext {
   apiGateRejection?: ApiGateRejectionContext
   apiFailure?: ApiFailureContext
   requestId?: string
+  publicRequestProtocol?: 'http' | 'https'
 }

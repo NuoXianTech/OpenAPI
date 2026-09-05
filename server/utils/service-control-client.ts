@@ -24,7 +24,9 @@ export class ServiceControlRequestError extends Error {
   constructor(
     readonly status: number | null,
     readonly endpoint: string,
-    message: string
+    message: string,
+    readonly code: string | null = null,
+    readonly responseData: Readonly<Record<string, unknown>> | null = null
   ) {
     super(message)
     this.name = 'ServiceControlRequestError'
@@ -86,7 +88,15 @@ function normalizedErrorMessage(value: unknown): string | null {
   return message ? message.slice(0, 500) : null
 }
 
-async function describeErrorResponse(response: Response): Promise<string | null> {
+interface ServiceControlErrorResponse {
+  summary: string
+  code: string | null
+  data: Readonly<Record<string, unknown>> | null
+}
+
+async function describeErrorResponse(
+  response: Response
+): Promise<ServiceControlErrorResponse | null> {
   const headerCode = normalizedErrorCode(
     response.headers.get('x-openapi-error-code')
   )
@@ -94,25 +104,36 @@ async function describeErrorResponse(response: Response): Promise<string | null>
   try {
     raw = await readLimitedText(response, MAX_CONTROL_ERROR_BYTES)
   } catch {
-    return headerCode ? `[${headerCode}]` : null
+    return headerCode
+      ? { summary: `[${headerCode}]`, code: headerCode, data: null }
+      : null
   }
 
   let body: unknown
   try {
     body = JSON.parse(raw)
   } catch {
-    return headerCode ? `[${headerCode}]` : null
+    return headerCode
+      ? { summary: `[${headerCode}]`, code: headerCode, data: null }
+      : null
   }
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    return headerCode ? `[${headerCode}]` : null
+    return headerCode
+      ? { summary: `[${headerCode}]`, code: headerCode, data: null }
+      : null
   }
 
   const record = body as Record<string, unknown>
   const code = normalizedErrorCode(record.code) ?? headerCode
   const message = normalizedErrorMessage(record.message)
-  if (code && message) return `[${code}] ${message}`
-  if (code) return `[${code}]`
-  return message
+  const data = record.data && typeof record.data === 'object'
+    && !Array.isArray(record.data)
+    ? record.data as Record<string, unknown>
+    : null
+  const summary = code && message
+    ? `[${code}] ${message}`
+    : code ? `[${code}]` : message
+  return summary ? { summary, code, data } : null
 }
 
 function parseResponseData<TSchema extends z.ZodType>(
@@ -211,8 +232,10 @@ async function requestJson<TSchema extends z.ZodType>(
       response.status,
       endpoint,
       `service control request returned HTTP ${response.status}${
-        detail ? `: ${detail}` : ''
-      }`
+        detail ? `: ${detail.summary}` : ''
+      }`,
+      detail?.code ?? null,
+      detail?.data ?? null
     )
   }
   const raw = await readLimitedText(response, MAX_CONTROL_RESPONSE_BYTES)
