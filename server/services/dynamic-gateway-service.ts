@@ -322,7 +322,7 @@ export const dynamicGatewayService = {
       const response = await sendProxy(event, targetUrl.toString(), {
         fetch: proxyFetch,
         sendStream: true,
-        onResponse: async (_proxyEvent, upstreamResponse) => {
+        onResponse: (_proxyEvent, upstreamResponse) => {
           upstreamStatus = upstreamResponse.status
           if ([502, 503, 504].includes(upstreamResponse.status)) {
             // Retry guidance is a Platform-owned field; the upstream copy is
